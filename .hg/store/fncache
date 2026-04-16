@@ -1,1 +1,15 @@
 data/readme.md.i
+data/src/styles/globals.css.i
+data/.gitignore.i
+data/src/app/layout.js.i
+data/postcss.config.mjs.i
+data/eslint.config.mjs.i
+data/types/routes.d.ts.i
+data/next.config.mjs.i
+data/types/cache-life.d.ts.i
+data/types/validator.ts.i
+data/package.json.i
+data/.hgignore.i
+data/package-lock.json.i
+data/src/app/page.js.i
+data/jsconfig.json.i
