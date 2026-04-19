@@ -15,3 +15,5 @@ data/src/app/page.js.i
 data/jsconfig.json.i
 data/src/lib/supabase.js.i
 data/schema.sql.i
+data/.vscode/settings.json.i
+data/src/components/Navbar.js.i
