@@ -13,3 +13,5 @@ data/.hgignore.i
 data/package-lock.json.i
 data/src/app/page.js.i
 data/jsconfig.json.i
+data/src/lib/supabase.js.i
+data/schema.sql.i
