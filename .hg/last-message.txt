@@ -1,1 +1,1 @@
-tailwind path fixed
+added login popup for main page, also added a few polls to check supabase connection.
