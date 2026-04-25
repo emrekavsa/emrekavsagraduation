@@ -20,3 +20,4 @@ data/src/components/Navbar.js.i
 data/src/components/PollCard.js.i
 data/src/components/Login.js.i
 data/src/context/AppContext.js.i
+data/src/app/create/page.js.i
