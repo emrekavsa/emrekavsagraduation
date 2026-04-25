@@ -1,1 +1,1 @@
-added login popup for main page, also added a few polls to check supabase connection.
+added global state for dark mode and user auth, added a dropdown menu into navbar to locate into settings or user profile 

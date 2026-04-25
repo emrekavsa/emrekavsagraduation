@@ -1,127 +1,94 @@
 "use client"
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useApp } from '@/context/AppContext'
+import Navbar from '@/components/Navbar'
+import PollCard from '@/components/PollCard'
+import Login from '@/components/Login'
 
 export default function Home() {
+  const { user, isDark, loading } = useApp()
   const [polls, setPolls] = useState([])
-  const [loading, setLoading] = useState(true)
-  
-  const [user, setUser] = useState(null) 
-  
-  const [showLogin, setShowLogin] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
 
   useEffect(() => {
     fetchPolls()
-    checkUser() 
   }, [])
 
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
-  }
-
   const fetchPolls = async () => {
-    const { data, error } = await supabase
-      .from('polls')
-      .select(`id, title, poll_options ( id, content )`)
-      .order('created_at', { ascending: false })
+    try {
+      const { data, error } = await supabase
+        .from('polls')
+        .select('id, title, poll_options(id, content)')
+        .order('created_at', { ascending: false })
 
-    if (error) alert("Veriler alınamadı")
-    else setPolls(data)
-    setLoading(false)
-  }
-
-  const handleAuth = async (e) => {
-    e.preventDefault()
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (error) {
-      const { error: signUpError } = await supabase.auth.signUp({ email, password })
-      if (signUpError) alert("Hata oluştu")
-      else alert("Kayıt olundu, tekrar giriş yapın")
-    } else {
-      setUser(data.user)
-      setShowLogin(false)
-      alert("Giriş başarılı!")
+      if (error) throw error
+      setPolls(data || [])
+    } catch (error) {
+      console.error(error.message)
     }
-  }
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    window.location.reload()
   }
 
   const handleVote = async (pollId, optionId) => {
-    if (!user) { 
-      alert("Önce giriş yapmalısın!")
-      setShowLogin(true)
+    if (!user) {
+      setIsLoginOpen(true)
       return
     }
 
-    const { error } = await supabase
-      .from('votes')
-      .insert([{ poll_id: pollId, option_id: optionId, user_id: user.id }])
+    try {
+      const { error } = await supabase
+        .from('votes')
+        .insert([{ poll_id: pollId, option_id: optionId, user_id: user.id }])
 
-    if (error) alert("Zaten oy verdin veya bir hata oluştu")
-    else alert("Oy verildi!")
+      if (error) {
+        alert(error.code === '23505' ? "You already voted!" : "An error occurred.")
+      } else {
+        alert("Vote successful!")
+      }
+    } catch (error) {
+      console.error(error.message)
+    }
   }
 
-  if (loading) return <p>Yükleniyor...</p>
+  if (loading) {
+    return (
+      <div className={`h-screen flex items-center justify-center ${isDark ? 'bg-black text-white' : 'bg-white text-black'}`}>
+        Loading...
+      </div>
+    )
+  }
 
   return (
-    <div style={{ padding: '20px' }}>
-      
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Anketler</h1>
-        
-        {/* varsa çıkış yoksa giriş yaptır */}
-        {user ? (
-          <div>
-            <span>{user.email}</span>
-            <button onClick={handleLogout} style={{ marginLeft: '10px' }}>Çıkış Yap</button>
-          </div>
-        ) : (
-          <button onClick={() => setShowLogin(true)}>Giriş Yap</button>
-        )}
+    <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-black'}`}>
+      <Navbar onShowLogin={() => setIsLoginOpen(true)} />
+
+      <div className="max-w-xl mx-auto p-4 mt-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2">Polls</h1>
+          <p className="text-gray-500">Vote on community polls</p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {polls.length > 0 ? (
+            polls.map((poll) => (
+              <PollCard 
+                key={poll.id} 
+                poll={poll} 
+                onVote={handleVote} 
+                isDark={isDark} 
+              />
+            ))
+          ) : (
+            <p className="text-center text-gray-500">No polls yet.</p>
+          )}
+        </div>
       </div>
-      
-      <hr />
 
-      {polls.map((poll) => (
-        <div key={poll.id} style={{ borderBottom: '1px solid gray', padding: '10px 0' }}>
-          <h3>{poll.title}</h3>
-          {poll.poll_options.map((option) => (
-            <button 
-              key={option.id} 
-              onClick={() => handleVote(poll.id, option.id)}
-              style={{ marginRight: '10px' }}
-            >
-              {option.content}
-            </button>
-          ))}
-        </div>
-      ))}
-
-      {showLogin && (
-        <div style={{
-          position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center'
-        }}>
-          <div style={{ backgroundColor: 'white', padding: '20px', border: '1px solid black' }}>
-            <h2>Giriş / Kayıt</h2>
-            <form onSubmit={handleAuth}>
-              <input type="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} required /><br /><br />
-              <input type="password" placeholder="Şifre" onChange={(e) => setPassword(e.target.value)} required /><br /><br />
-              <button type="submit">Devam Et</button>
-              <button type="button" onClick={() => setShowLogin(false)} style={{ marginLeft: '10px' }}>Kapat</button>
-            </form>
-          </div>
-        </div>
-      )}
-
+      <Login 
+        isOpen={isLoginOpen} 
+        onClose={() => setIsLoginOpen(false)} 
+        isDark={isDark}
+      />
     </div>
   )
 }

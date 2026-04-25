@@ -1,17 +1,19 @@
-import "../styles/globals.css";
+import { AppProvider } from '@/context/AppContext'
+import "../styles/globals.css"
 
 export const metadata = {
-  title: "test",
-  description: "test",
-};
+  title: "poll App",
+  description: "poll app",
+}
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="tr">
-      <body className="">
-        {/* navbar */}
-        {children}
+    <html lang="en">
+      <body>
+        <AppProvider>
+          {children}
+        </AppProvider>
       </body>
     </html>
-  );
+  )
 }

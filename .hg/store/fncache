@@ -17,3 +17,6 @@ data/src/lib/supabase.js.i
 data/schema.sql.i
 data/.vscode/settings.json.i
 data/src/components/Navbar.js.i
+data/src/components/PollCard.js.i
+data/src/components/Login.js.i
+data/src/context/AppContext.js.i
