@@ -1,29 +1,34 @@
-"use client";
-import { useState } from "react";
-import Link from "next/link";
-import { supabase } from "@/lib/supabase";
-import { useApp } from "@/context/AppContext";
+"use client"
+import { useState } from "react"
+import Link from "next/link"
+import { supabase } from "@/lib/supabase"
+import { useApp } from "@/context/AppContext"
 
 export default function Navbar({ onShowLogin }) {
-  const { user, isDark } = useApp();
-  const [isOpen, setIsOpen] = useState(false);
+  const { user, isDark } = useApp()
+  const [isOpen, setIsOpen] = useState(false)
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.reload();
-  };
+    try {
+      setIsOpen(false)
+      await supabase.auth.signOut()
+      window.location.href = "/"
+    } catch (err) {
+      console.error("Logout failed:", err.message)
+    }
+  }
 
-  const name = user?.email?.split("@")[0] || "?";
+  const displayName = user?.username || "Account"
 
   return (
-    <nav
-      className={`flex justify-end p-4 border-b ${isDark ? "bg-black border-gray-800 text-white" : "bg-white border-gray-300 text-black"}`}
-    >
+    <nav className={`flex justify-end p-4 border-b sticky top-0 z-50 ${
+      isDark ? "bg-black border-zinc-800 text-white" : "bg-white border-gray-200 text-black"
+    }`}>
       <div className="flex items-center gap-4">
         {!user ? (
           <button
             onClick={onShowLogin}
-            className="p-2 px-4 bg-blue-600 text-white rounded"
+            className="p-2 px-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
           >
             Sign In
           </button>
@@ -31,7 +36,7 @@ export default function Navbar({ onShowLogin }) {
           <>
             <Link
               href="/create"
-              className="p-2 px-4 bg-blue-600 text-white rounded font-bold text-sm"
+              className="p-2 px-4 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
             >
               + Create Poll
             </Link>
@@ -39,24 +44,23 @@ export default function Navbar({ onShowLogin }) {
             <div className="relative">
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-10 h-10 border rounded-full font-bold ${isDark ? "bg-gray-800 border-gray-600" : "bg-gray-200 border-gray-400"}`}
+                className={`w-10 h-10 border rounded-full font-bold flex items-center justify-center transition-all ${
+                  isDark ? "bg-zinc-800 border-zinc-700" : "bg-gray-100 border-gray-300"
+                }`}
               >
-                {name[0].toUpperCase()}
+                {displayName[0].toUpperCase()}
               </button>
 
               {isOpen && (
-                <div
-                  className={`absolute right-0 mt-2 w-48 border shadow-xl z-50 ${isDark ? "bg-black border-gray-800" : "bg-white border-gray-300"}`}
-                >
-                  <div className="p-2 border-b border-gray-500/30 text-sm font-bold truncate">
-                    @{name}
+                <div className={`absolute right-0 mt-2 w-48 border shadow-xl rounded-xl p-2 z-50 ${
+                  isDark ? "bg-zinc-900 border-zinc-800" : "bg-white border-gray-200"
+                }`}>
+                  <div className="p-2 border-b border-gray-500/10 text-sm font-bold truncate opacity-70">
+                    @{displayName}
                   </div>
-                  <button className="w-full text-left p-2 hover:bg-gray-500/10 text-sm">
-                    Settings
-                  </button>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left p-2 text-red-500 hover:bg-gray-500/10 text-sm font-bold"
+                    className="w-full text-left p-2 mt-1 text-red-500 hover:bg-red-500/10 rounded-lg text-sm font-bold transition-colors"
                   >
                     Sign Out
                   </button>
@@ -67,5 +71,5 @@ export default function Navbar({ onShowLogin }) {
         )}
       </div>
     </nav>
-  );
+  )
 }

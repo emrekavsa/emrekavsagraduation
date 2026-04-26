@@ -1,1 +1,1 @@
-implemented several features to pollcards and  added conditional access to create poll page.
+fixed a navbar dropdown menu issue
