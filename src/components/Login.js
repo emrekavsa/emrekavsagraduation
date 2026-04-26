@@ -13,9 +13,10 @@ export default function Login({ isOpen, onClose, isDark }) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = async (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault()
     setLoading(true)
+
     try {
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({
@@ -28,14 +29,16 @@ export default function Login({ isOpen, onClose, isDark }) {
         const { error } = await supabase.auth.signUp({
           email: form.email,
           password: form.password,
-          options: { data: { display_name: form.username } }
+          options: { 
+            data: { username: form.username } 
+          }
         })
         if (error) throw error
-        alert("Registration successful!")
+        alert("Registration successful! You can now log in.")
         setMode('login')
       }
-    } catch (error) {
-      alert(error.message)
+    } catch (err) {
+      alert(err.message)
     } finally {
       setLoading(false)
     }
@@ -43,31 +46,31 @@ export default function Login({ isOpen, onClose, isDark }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className={`p-6 w-full max-w-sm border rounded ${isDark ? 'bg-black border-gray-800 text-white' : 'bg-white border-gray-300 text-black'}`}>
+      <div className={`p-6 w-full max-w-sm border rounded-2xl ${isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-gray-200 text-black'}`}>
         
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-zinc-800 rounded-xl">
           <button 
             onClick={() => setMode('login')}
-            className={`flex-1 p-2 rounded ${mode === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black dark:bg-gray-800 dark:text-white'}`}
+            className={`flex-1 p-2 rounded-lg ${mode === 'login' ? 'bg-blue-600 text-white' : 'text-gray-500'}`}
           >
             Log In
           </button>
           <button 
             onClick={() => setMode('register')}
-            className={`flex-1 p-2 rounded ${mode === 'register' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black dark:bg-gray-800 dark:text-white'}`}
+            className={`flex-1 p-2 rounded-lg ${mode === 'register' ? 'bg-blue-600 text-white' : 'text-gray-500'}`}
           >
             Register
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={handleAuth} className="flex flex-col gap-3">
           {mode === 'register' && (
             <input 
               name="username" 
               placeholder="Username" 
               required 
               onChange={handleChange} 
-              className={`p-2 border rounded outline-none ${isDark ? 'bg-gray-800 border-gray-600' : 'bg-gray-50 border-gray-300'}`} 
+              className={`p-3 border rounded-xl outline-none ${isDark ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-300'}`} 
             />
           )}
           <input 
@@ -76,7 +79,7 @@ export default function Login({ isOpen, onClose, isDark }) {
             placeholder="Email" 
             required 
             onChange={handleChange} 
-            className={`p-2 border rounded outline-none ${isDark ? 'bg-gray-800 border-gray-600' : 'bg-gray-50 border-gray-300'}`} 
+            className={`p-3 border rounded-xl outline-none ${isDark ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-300'}`} 
           />
           <input 
             name="password" 
@@ -84,15 +87,15 @@ export default function Login({ isOpen, onClose, isDark }) {
             placeholder="Password" 
             required 
             onChange={handleChange} 
-            className={`p-2 border rounded outline-none ${isDark ? 'bg-gray-800 border-gray-600' : 'bg-gray-50 border-gray-300'}`} 
+            className={`p-3 border rounded-xl outline-none ${isDark ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-300'}`} 
           />
           
-          <button type="submit" disabled={loading} className="p-2 mt-2 bg-blue-600 text-white rounded disabled:opacity-50">
+          <button type="submit" disabled={loading} className="p-3 mt-2 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-50 transition-all">
             {loading ? 'Wait...' : (mode === 'login' ? 'Continue' : 'Create Account')}
           </button>
         </form>
 
-        <button onClick={onClose} className="mt-4 w-full text-center text-red-500">
+        <button onClick={onClose} className="mt-4 w-full text-center text-sm text-gray-500 hover:text-red-500">
           Dismiss
         </button>
         
