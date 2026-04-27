@@ -1,4 +1,5 @@
 "use client"
+import { useRouter } from 'next/navigation'
 
 function formatRelativeTime(dateString) {
   if (!dateString) return ''
@@ -10,14 +11,16 @@ function formatRelativeTime(dateString) {
   return `${Math.floor(diff / 86400)}d ago`
 }
 
-export default function PollCard({ poll, user, onVote, isDark }) {
+export default function PollCard({ poll, user, onVote, isDark, onCommentClick }) {
+  const router = useRouter()
+
   if (!poll || !poll.poll_options) return null
 
   const authorName = poll.profiles?.username || 'Anonymous'
   const hasImages = poll.poll_options.some(opt => opt.image_url)
   
   const totalVotes = poll.poll_options.reduce((acc, opt) => {
-    return acc + (opt.votes ? opt.votes.length : 0)
+    return acc + (opt.votes?.length || 0)
   }, 0)
 
   const userVote = user 
@@ -25,6 +28,7 @@ export default function PollCard({ poll, user, onVote, isDark }) {
     : null
 
   const hasVoted = !!userVote
+  const commentCount = poll.comments?.length || 0
 
   return (
     <div className={`p-5 border rounded-2xl transition-all ${
@@ -44,7 +48,7 @@ export default function PollCard({ poll, user, onVote, isDark }) {
 
       <div className={hasImages ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-2"}>
         {poll.poll_options.map((opt) => {
-          const voteCount = opt.votes ? opt.votes.length : 0
+          const voteCount = opt.votes?.length || 0
           const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0
           const isMyChoice = opt.id === userVote?.id
 
@@ -103,11 +107,37 @@ export default function PollCard({ poll, user, onVote, isDark }) {
         })}
       </div>
       
-      {hasVoted && (
-        <div className={`mt-4 text-[10px] text-right opacity-50 font-bold uppercase tracking-widest`}>
-          Total: {totalVotes} {totalVotes === 1 ? 'Vote' : 'Votes'}
-        </div>
-      )}
+      <div className={`mt-5 flex items-center justify-between border-t pt-4 ${isDark ? 'border-zinc-800' : 'border-gray-100'}`}>
+        
+        <button 
+          onClick={() => {
+            if (onCommentClick) {
+              onCommentClick()
+            } else {
+              router.push(`/poll/${poll.id}`)
+            }
+          }}
+          className={`group flex items-center gap-1.5 text-sm font-bold transition-all px-3 py-1.5 rounded-full ${
+            isDark 
+              ? 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white' 
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          <img 
+            src={isDark ? "/whitecomment.svg" : "/darkcomment.svg"} 
+            alt="Discuss" 
+            className="w-4 h-4 object-contain opacity-70 group-hover:opacity-100 transition-opacity" 
+          />
+          <span>{commentCount}</span>
+        </button>
+
+        {hasVoted && (
+          <div className={`text-[10px] text-right opacity-50 font-bold uppercase tracking-widest`}>
+            Total: {totalVotes} {totalVotes === 1 ? 'Vote' : 'Votes'}
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }

@@ -14,16 +14,28 @@ export default function Navbar({ onShowLogin }) {
       await supabase.auth.signOut()
       window.location.href = "/"
     } catch (err) {
-      console.error("Logout failed:", err.message)
+      console.error(err.message)
     }
   }
 
-  const displayName = user?.username || "Account"
+  const displayName = user?.user_metadata?.username || user?.username || "Account"
 
   return (
-    <nav className={`flex justify-end p-4 border-b sticky top-0 z-50 ${
+    <nav className={`flex justify-between items-center p-4 border-b sticky top-0 z-50 ${
       isDark ? "bg-black border-zinc-800 text-white" : "bg-white border-gray-200 text-black"
     }`}>
+      
+      <a 
+        href="/" 
+        className="flex items-center gap-2 group transition-opacity hover:opacity-80"
+      >
+        <img 
+          src="/poll-icon.svg" 
+          alt="Home" 
+          className={`w-8 h-8 transition-all ${isDark ? 'invert' : ''}`} 
+        />
+      </a>
+
       <div className="flex items-center gap-4">
         {!user ? (
           <button

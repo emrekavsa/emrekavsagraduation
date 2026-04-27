@@ -21,3 +21,9 @@ data/src/components/PollCard.js.i
 data/src/components/Login.js.i
 data/src/context/AppContext.js.i
 data/src/app/create/page.js.i
+data/public/edit-icon.svg.i
+data/public/poll-icon.svg.i
+data/public/delete-icon.svg.i
+data/src/app/poll/[id]/page.js.i
+data/public/whitecomment.svg.i
+data/public/darkcomment.svg.i

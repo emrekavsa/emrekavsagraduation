@@ -1,1 +1,1 @@
-fixed a navbar dropdown menu issue
+added comments section with delete and update feature for personal comments, added svg icons for better visual.
