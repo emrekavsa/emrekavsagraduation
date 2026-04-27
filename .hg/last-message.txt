@@ -1,1 +1,1 @@
-added comments section with delete and update feature for personal comments, added svg icons for better visual.
+added replying to comments feature, user profile page and time formatting for writing and  editing comments.
