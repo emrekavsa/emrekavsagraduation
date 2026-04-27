@@ -38,6 +38,7 @@ export default function ProfilePage() {
       .insert([{ poll_id: pollId, option_id: optionId, user_id: currentUser.id }])
     
     if (!error) {
+      // Re-fetch or update local state
       window.location.reload()
     }
   }

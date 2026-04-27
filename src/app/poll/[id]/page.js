@@ -43,7 +43,6 @@ export default function PollDetailPage() {
 
   useEffect(() => { fetchData() }, [id])
 
-
   const handleCommentSubmit = async (e, parentId = null) => {
     if (e) e.preventDefault()
     const content = parentId ? replyContent : newComment

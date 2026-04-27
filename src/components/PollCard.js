@@ -72,7 +72,7 @@ export default function PollCard({ poll, user, onVote, isDark, onCommentClick })
               key={opt.id} 
               onClick={() => onVote(poll.id, opt.id)}
               disabled={hasVoted}
-              className={`group relative flex overflow-hidden border rounded-xl min-h-14 transition-all
+              className={`group relative flex overflow-hidden border rounded-xl min-h-[56px] transition-all
                 ${hasImages ? 'flex-col' : 'flex-row items-center p-4'} 
                 ${isDark ? 'border-zinc-700' : 'border-gray-100'}
                 ${!hasVoted ? (isDark ? 'hover:bg-zinc-800' : 'hover:bg-gray-50') : 'cursor-default'}
