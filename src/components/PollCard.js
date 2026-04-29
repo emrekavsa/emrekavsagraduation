@@ -1,6 +1,6 @@
 "use client"
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-
 
 function formatRelativeTime(dateString) {
   if (!dateString) return ''
@@ -14,16 +14,14 @@ function formatRelativeTime(dateString) {
 
 export default function PollCard({ poll, user, onVote, isDark, onCommentClick }) {
   const router = useRouter()
-
+  const [copied, setCopied] = useState(false)
 
   if (!poll || !poll.poll_options) return null
-
 
   const authorName = poll.profiles?.username || 'Anonymous'
   const hasImages = poll.poll_options.some(opt => opt.image_url)
   const commentCount = poll.comments?.length || 0
   
-
   let totalVotes = 0
   poll.poll_options.forEach(opt => {
     totalVotes += (opt.votes?.length || 0)
@@ -35,12 +33,19 @@ export default function PollCard({ poll, user, onVote, isDark, onCommentClick })
 
   const hasVoted = !!userVote
 
+  const handleShare = (e) => {
+    e.stopPropagation()
+    const url = `${window.location.origin}/poll/${poll.id}`
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 700)
+  }
+
   return (
     <div className={`p-5 border rounded-2xl transition-all ${
       isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-gray-200 text-black'
     }`}>
       
-
       <div className="flex items-center gap-2 mb-4 text-sm">
         <a 
           href={`/profile/${authorName}`}
@@ -49,7 +54,7 @@ export default function PollCard({ poll, user, onVote, isDark, onCommentClick })
           <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
             {authorName[0].toUpperCase()}
           </div>
-          <span className="font-semibold">{authorName}</span>
+          <span className="font-semibold">@{authorName}</span>
         </a>
 
         <div className={`flex items-center gap-2 ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>
@@ -59,7 +64,6 @@ export default function PollCard({ poll, user, onVote, isDark, onCommentClick })
       </div>
 
       <h3 className="text-xl font-bold mb-5">{poll.title}</h3>
-
 
       <div className={hasImages ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-2"}>
         {poll.poll_options.map((opt) => {
@@ -106,12 +110,10 @@ export default function PollCard({ poll, user, onVote, isDark, onCommentClick })
                 </div>
                 
                 {!hasVoted ? (
-
                   <div className={`text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity ${hasImages ? 'text-xs mt-2' : 'text-sm'}`}>
                     VOTE
                   </div>
                 ) : (
-
                   <div className={`flex flex-col items-end ${hasImages ? 'mt-2 w-full flex-row justify-between items-center' : ''}`}>
                     <span className="font-bold">{percent}%</span>
                     <span className="text-[10px] opacity-60">{voteCount} votes</span>
@@ -126,27 +128,46 @@ export default function PollCard({ poll, user, onVote, isDark, onCommentClick })
       
       <div className={`mt-5 flex items-center justify-between border-t pt-4 ${isDark ? 'border-zinc-800' : 'border-gray-100'}`}>
         
-        <button 
-          onClick={() => {
-            if (onCommentClick) {
-              onCommentClick() 
-            } else {
-              router.push(`/poll/${poll.id}`)
-            }
-          }}
-          className={`group flex items-center gap-1.5 text-sm font-bold transition-all px-3 py-1.5 rounded-full ${
-            isDark 
-              ? 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white' 
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900'
-          }`}
-        >
-          <img 
-            src={isDark ? "/whitecomment.svg" : "/darkcomment.svg"} 
-            alt="Discuss" 
-            className="w-4 h-4 object-contain opacity-70 group-hover:opacity-100 transition-opacity" 
-          />
-          <span>{commentCount}</span>
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => {
+              if (onCommentClick) {
+                onCommentClick() 
+              } else {
+                router.push(`/poll/${poll.id}`)
+              }
+            }}
+            className={`group flex items-center gap-1.5 text-sm font-bold transition-all px-3 py-1.5 rounded-full ${
+              isDark 
+                ? 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white' 
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            <img 
+              src={isDark ? "/whitecomment.svg" : "/darkcomment.svg"} 
+              alt="Discuss" 
+              className="w-4 h-4 object-contain opacity-70 group-hover:opacity-100 transition-opacity" 
+            />
+            <span>{commentCount}</span>
+          </button>
+
+          <button 
+            onClick={handleShare}
+            className={`flex items-center justify-center w-10 h-[32px] transition-all duration-300 rounded-full ${
+              copied 
+                ? 'bg-green-500' 
+                : (isDark ? 'bg-zinc-800/80 hover:bg-zinc-700' : 'bg-gray-100 hover:bg-gray-200')
+            }`}
+          >
+            <img 
+              src="/share.svg" 
+              alt="Share" 
+              className={`w-4 h-4 transition-all ${
+                copied ? 'invert-0 brightness-200' : (isDark ? 'invert' : '')
+              } opacity-70`}
+            />
+          </button>
+        </div>
 
         {hasVoted && (
           <div className="text-[10px] text-right opacity-50 font-bold uppercase tracking-widest">

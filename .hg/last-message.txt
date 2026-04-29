@@ -1,1 +1,1 @@
-added replying to comments feature, user profile page and time formatting for writing and  editing comments.
+added share button to pollcards
