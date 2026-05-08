@@ -58,6 +58,9 @@ export function AppProvider({ children }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'votes' }, () => {
         setRealtimeTrigger(prev => prev + 1)
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'polls' }, () => {
+        setRealtimeTrigger(prev => prev + 1)
+      })
       .subscribe()
 
     return () => {

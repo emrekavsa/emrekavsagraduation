@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatRelativeTime } from '@/lib/utils'
 import { useApp } from '@/context/AppContext'
+import { supabase } from '@/lib/supabase'
 
 export default function PollCard({ poll, user, onVote }) {
   const router = useRouter()
@@ -26,6 +27,23 @@ export default function PollCard({ poll, user, onVote }) {
     : null
 
   const hasVoted = !!userVote
+
+  const handleDelete = async (e) => {
+    e.stopPropagation()
+    if (!confirm('Are you sure you want to delete this poll?')) return
+    
+    const { error } = await supabase
+      .from('polls')
+      .delete()
+      .eq('id', poll.id)
+      .eq('user_id', user.id)
+
+    if (error) {
+      alert(error.message)
+    } else {
+      window.location.reload()
+    }
+  }
 
   const handleShare = (e) => {
     e.stopPropagation()
@@ -55,10 +73,17 @@ export default function PollCard({ poll, user, onVote }) {
           <span className="opacity-30 text-[12px]">• {formatRelativeTime(poll.created_at)}</span>
         </div>
 
-        <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-          isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-100 text-gray-500'
-        }`}>
-          {category}
+        <div className="flex items-center gap-2">
+          {user?.id === poll.user_id && (
+            <button onClick={handleDelete} className="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors">
+              <img src="/delete-icon.svg" alt="Delete" className="w-3.5 h-3.5 opacity-30 hover:opacity-100 dark:invert" />
+            </button>
+          )}
+          <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+            isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-100 text-gray-500'
+          }`}>
+            {category}
+          </div>
         </div>
       </div>
 

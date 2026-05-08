@@ -16,13 +16,25 @@ export default function ProfilePage() {
 
   const fetchUserPolls = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('polls')
-      .select(POLL_SELECT)
-      .eq('profiles.username', username)
-      .order('created_at', { ascending: false })
+    
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', username)
+      .single()
 
-    if (!error && data) setPolls(data)
+    if (profileData) {
+      const { data, error } = await supabase
+        .from('polls')
+        .select(POLL_SELECT)
+        .eq('user_id', profileData.id)
+        .order('created_at', { ascending: false })
+
+      if (!error && data) setPolls(data)
+    } else {
+      setPolls([])
+    }
+    
     setLoading(false)
   }
 

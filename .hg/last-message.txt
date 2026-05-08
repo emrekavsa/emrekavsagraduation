@@ -1,1 +1,1 @@
-added categories to polls.
+added delete button to pollcard and fixed a realtime issue on user profile page.
