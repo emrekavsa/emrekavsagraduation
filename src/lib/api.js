@@ -9,7 +9,7 @@ export async function castVote(pollId, optionId, userId) {
   return error
 }
 
-export async function handleVote(pollId, optionId, user, setPolls, onLoginRequired) {
+export async function handleVote(pollId, optionId, user, onSuccess, onLoginRequired) {
   if (!user) {
     if (onLoginRequired) onLoginRequired()
     return
@@ -23,7 +23,8 @@ export async function handleVote(pollId, optionId, user, setPolls, onLoginRequir
       .select(POLL_SELECT)
       .eq('id', pollId)
       .single()
-    if (data) setPolls(prev => prev.map(p => p.id === pollId ? data : p))
+      
+    if (data && onSuccess) onSuccess(data)
   } else if (error.code === '23505') {
     alert('You have already voted!')
   }

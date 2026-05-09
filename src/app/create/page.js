@@ -3,18 +3,16 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useApp } from "@/context/AppContext"
-import Login from "@/components/Login"
 
-const CATEGORIES = ["General", "Tech", "Sports", "Gaming", "Cinema & Music", "Lifestyle"]
+const CATEGORIES = ["General", "Tech", "Sports", "Gaming", "Movies & TV Shows"]
 
 export default function CreatePoll() {
-  const { user, isDark, loading: authLoading } = useApp()
+  const { user, isDark, loading: authLoading, requireLogin } = useApp()
   const router = useRouter()
 
   const [title, setTitle] = useState("")
   const [category, setCategory] = useState("General")
   const [loading, setLoading] = useState(false)
-  const [isLoginOpen, setIsLoginOpen] = useState(false)
 
   const [options, setOptions] = useState([
     { content: "", image: null, preview: null },
@@ -22,7 +20,7 @@ export default function CreatePoll() {
   ])
 
   useEffect(() => {
-    if (!authLoading && !user) setIsLoginOpen(true)
+    if (!authLoading && !user) requireLogin()
   }, [user, authLoading])
 
   const handleFileChange = (index, e) => {
@@ -47,7 +45,7 @@ export default function CreatePoll() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!user) return setIsLoginOpen(true)
+    if (!user) return requireLogin()
 
     const imagesCount = options.filter((opt) => opt.image !== null).length
     if (imagesCount > 0 && imagesCount < options.length) {
@@ -192,8 +190,6 @@ export default function CreatePoll() {
           {loading ? "Posting..." : "Share Poll"}
         </button>
       </form>
-
-      <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} isDark={isDark} />
     </div>
   )
 }

@@ -1,13 +1,11 @@
 "use client"
-import { useState } from "react"
 import { useApp } from "@/context/AppContext"
 import Navbar from "@/components/Navbar"
 import Sidebar from "@/components/Sidebar"
 import Login from "@/components/Login"
 
 export default function ClientShell({ children }) {
-  const { isDark } = useApp()
-  const [isLoginOpen, setIsLoginOpen] = useState(false)
+  const { isDark, isLoginOpen, setIsLoginOpen } = useApp()
 
   return (
     <div className={`${isDark ? 'bg-black text-white' : 'bg-white text-black'} transition-colors min-h-screen`}>

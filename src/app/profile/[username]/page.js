@@ -8,7 +8,7 @@ import { handleVote, POLL_SELECT } from "@/lib/api"
 
 export default function ProfilePage() {
   const { username } = useParams()
-  const { user: currentUser, isDark } = useApp()
+  const { user: currentUser, isDark, requireLogin } = useApp()
   const [profile, setProfile] = useState(null)
   const [polls, setPolls] = useState([])
   const [loading, setLoading] = useState(true)
@@ -80,7 +80,13 @@ export default function ProfilePage() {
   }
 
   const onVote = (pollId, optionId) =>
-    handleVote(pollId, optionId, currentUser, setPolls, () => alert("Please login"))
+    handleVote(
+      pollId, 
+      optionId, 
+      currentUser, 
+      (updatedPoll) => setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p)), 
+      requireLogin
+    )
 
   if (loading) return null
 
@@ -114,7 +120,7 @@ export default function ProfilePage() {
 
       <div className="flex flex-col gap-6">
         {polls.map((poll) => (
-          <PollCard key={poll.id} poll={poll} user={currentUser} onVote={onVote} isDark={isDark} />
+          <PollCard key={poll.id} poll={poll} user={currentUser} onVote={onVote} />
         ))}
       </div>
     </div>

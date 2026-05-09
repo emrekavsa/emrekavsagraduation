@@ -4,16 +4,14 @@ import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useApp } from "@/context/AppContext"
 import PollCard from "@/components/PollCard"
-import Login from "@/components/Login"
 import { handleVote, POLL_SELECT } from "@/lib/api"
 
 export default function Home() {
   const searchParams = useSearchParams()
   const category = searchParams.get('c') 
   
-  const { user, isDark, loading: authLoading, realtimeTrigger } = useApp()
+  const { user, isDark, loading: authLoading, realtimeTrigger, requireLogin } = useApp()
   const [polls, setPolls] = useState([])
-  const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [dataLoading, setDataLoading] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
 
@@ -41,7 +39,13 @@ export default function Home() {
   }, [realtimeTrigger, category])
 
   const onVote = (pollId, optionId) =>
-    handleVote(pollId, optionId, user, setPolls, () => setIsLoginOpen(true))
+    handleVote(
+      pollId, 
+      optionId, 
+      user, 
+      (updatedPoll) => setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p)), 
+      requireLogin
+    )
 
   if (authLoading) return null
 
@@ -86,7 +90,6 @@ export default function Home() {
                 poll={poll}
                 user={user}
                 onVote={onVote}
-                isDark={isDark}
               />
             ))
           ) : !dataLoading && (
@@ -102,8 +105,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} isDark={isDark} />
     </div>
   )
 }

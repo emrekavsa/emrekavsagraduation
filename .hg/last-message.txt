@@ -1,1 +1,1 @@
-added profile photos and connected it with navbar, pollcards and comments
+centralized login component and removed dark mode prop

@@ -6,18 +6,16 @@ import { useApp } from '@/context/AppContext'
 import PollCard from '@/components/PollCard'
 import Link from 'next/link'
 import { handleVote, POLL_SELECT } from '@/lib/api'
-import Login from '@/components/Login'
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ""
-  const { isDark, user, realtimeTrigger } = useApp()
+  const { isDark, user, realtimeTrigger, requireLogin } = useApp()
 
   const [activeTab, setActiveTab] = useState('polls')
   const [polls, setPolls] = useState([])
   const [people, setPeople] = useState([])
   const [loading, setLoading] = useState(false)
-  const [isLoginOpen, setIsLoginOpen] = useState(false)
 
   const getResults = async () => {
     if (query.trim() === "") {
@@ -35,7 +33,7 @@ export default function SearchPage() {
 
     const peopleRes = await supabase
       .from('profiles')
-      .select('id, username')
+      .select('id, username, avatar_url')
       .ilike('username', `%${query}%`)
       .limit(10)
 
@@ -49,7 +47,13 @@ export default function SearchPage() {
   }, [query, realtimeTrigger])
 
   const onVote = (pollId, optionId) =>
-    handleVote(pollId, optionId, user, setPolls, () => setIsLoginOpen(true))
+    handleVote(
+      pollId, 
+      optionId, 
+      user, 
+      (updatedPoll) => setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p)), 
+      requireLogin
+    )
 
   return (
     <div key={query} className="w-full">
@@ -95,7 +99,6 @@ export default function SearchPage() {
                     poll={poll}
                     user={user}
                     onVote={onVote}
-                    isDark={isDark}
                   />
                 ))
               ) : <p className="text-center py-10 opacity-40">No polls found.</p>
@@ -109,8 +112,12 @@ export default function SearchPage() {
                       isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
-                      {profile.username ? profile.username[0].toUpperCase() : "U"}
+                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold overflow-hidden">
+                      {profile.avatar_url ? (
+                        <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" />
+                      ) : (
+                        profile.username ? profile.username[0].toUpperCase() : "U"
+                      )}
                     </div>
                     <div>
                       <div className="font-bold">@{profile.username}</div>
@@ -123,8 +130,6 @@ export default function SearchPage() {
           </div>
         )}
       </div>
-
-      <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} isDark={isDark} />
     </div>
   )
 }

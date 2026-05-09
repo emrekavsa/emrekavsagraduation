@@ -35,7 +35,7 @@ export default function Login({ isOpen, onClose }) {
           password: form.password,
         })
         if (error) throw error
-        window.location.reload()
+        onClose()
       } else {
         const { error } = await supabase.auth.signUp({
           email: form.email,

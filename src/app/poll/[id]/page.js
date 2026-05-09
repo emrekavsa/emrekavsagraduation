@@ -6,11 +6,10 @@ import { useApp } from '@/context/AppContext'
 import PollCard from '@/components/PollCard'
 import { formatRelativeTime } from '@/lib/utils'
 import { handleVote, POLL_SELECT } from '@/lib/api'
-import Login from '@/components/Login'
 
 export default function PollDetailPage() {
   const { id } = useParams()
-  const { user, isDark, realtimeTrigger } = useApp()
+  const { user, isDark, realtimeTrigger, requireLogin } = useApp()
 
   const [poll, setPoll] = useState(null)
   const [comments, setComments] = useState([])
@@ -21,7 +20,6 @@ export default function PollDetailPage() {
   const [editContent, setEditContent] = useState('')
   const [replyingTo, setReplyingTo] = useState(null)
   const [replyContent, setReplyContent] = useState('')
-  const [isLoginOpen, setIsLoginOpen] = useState(false)
 
   const commentInputRef = useRef(null)
 
@@ -50,13 +48,7 @@ export default function PollDetailPage() {
   }, [id, realtimeTrigger])
 
   const onVote = (pollId, optionId) =>
-    handleVote(pollId, optionId, user, (updatedPoll) => {
-      if (typeof updatedPoll === 'function') {
-        fetchData()
-      } else {
-        setPoll(updatedPoll)
-      }
-    }, () => setIsLoginOpen(true))
+    handleVote(pollId, optionId, user, (updatedPoll) => setPoll(updatedPoll), requireLogin)
 
   const handleCommentSubmit = async (e, parentId = null) => {
     if (e) e.preventDefault()
@@ -195,7 +187,6 @@ export default function PollDetailPage() {
           poll={poll}
           user={user}
           onVote={onVote}
-          isDark={isDark}
           onCommentClick={() => commentInputRef.current?.focus()}
         />
 
@@ -229,7 +220,6 @@ export default function PollDetailPage() {
           </div>
         </div>
       </div>
-      <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} isDark={isDark} />
     </div>
   )
 }

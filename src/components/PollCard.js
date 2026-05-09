@@ -41,7 +41,7 @@ export default function PollCard({ poll, user, onVote }) {
     if (error) {
       alert(error.message)
     } else {
-      window.location.reload()
+      router.refresh()
     }
   }
 

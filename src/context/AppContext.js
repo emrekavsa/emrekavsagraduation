@@ -9,6 +9,7 @@ export function AppProvider({ children }) {
   const [isDark, setIsDark] = useState(false)
   const [loading, setLoading] = useState(true)
   const [realtimeTrigger, setRealtimeTrigger] = useState(0)
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
 
   const fetchProfile = async (sessionUser) => {
     if (!sessionUser) return null
@@ -17,8 +18,11 @@ export function AppProvider({ children }) {
       .select('username, avatar_url')
       .eq('id', sessionUser.id)
       .single()
-
     return { ...sessionUser, username: data?.username || 'User', avatar_url: data?.avatar_url }
+  }
+
+  const requireLogin = () => {
+    setIsLoginOpen(true)
   }
 
   useEffect(() => {
@@ -71,7 +75,7 @@ export function AppProvider({ children }) {
   }, [])
 
   return (
-    <AppContext.Provider value={{ user, isDark, loading, realtimeTrigger }}>
+    <AppContext.Provider value={{ user, isDark, loading, realtimeTrigger, isLoginOpen, setIsLoginOpen, requireLogin }}>
       {children}
     </AppContext.Provider>
   )
