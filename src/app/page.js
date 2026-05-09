@@ -61,8 +61,8 @@ export default function Home() {
 
   return (
     <div className="w-full">
-      <div className="max-w-xl mx-auto p-4 mt-8">
-        <div className="flex items-center justify-center gap-2 mb-8 mt-2">
+      <div className="max-w-xl mx-auto p-4 mt-0">
+        <div className="flex items-center justify-center gap-2 mb-6 mt-0">
           {['newest', 'popular', 'interacted'].map((type) => (
             <button
               key={type}

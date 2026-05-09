@@ -65,8 +65,12 @@ export default function PollCard({ poll, user, onVote }) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-sm">
           <div onClick={() => router.push(`/profile/${authorName}`)} className="flex items-center gap-2 cursor-pointer">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
-              {authorName[0].toUpperCase()}
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold overflow-hidden">
+              {poll.profiles?.avatar_url ? (
+                <img src={poll.profiles.avatar_url} alt={authorName} className="w-full h-full object-cover" />
+              ) : (
+                authorName[0].toUpperCase()
+              )}
             </div>
             <span className="font-semibold hover:underline">@{authorName}</span>
           </div>

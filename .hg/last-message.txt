@@ -1,1 +1,1 @@
-added svg icons for each category, added a logo to navbar and fixed delete icon appearence on pollcards.
+added profile photos and connected it with navbar, pollcards and comments

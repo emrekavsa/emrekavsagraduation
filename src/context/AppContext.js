@@ -14,11 +14,11 @@ export function AppProvider({ children }) {
     if (!sessionUser) return null
     const { data } = await supabase
       .from('profiles')
-      .select('username')
+      .select('username, avatar_url')
       .eq('id', sessionUser.id)
       .single()
 
-    return { ...sessionUser, username: data?.username || 'User' }
+    return { ...sessionUser, username: data?.username || 'User', avatar_url: data?.avatar_url }
   }
 
   useEffect(() => {

@@ -77,11 +77,15 @@ export default function Navbar({ onShowLogin }) {
             <div className="relative">
               <button 
                 onClick={() => setIsOpen(!isOpen)} 
-                className={`w-9 h-9 border rounded-full font-bold flex items-center justify-center transition-all ${
+                className={`w-9 h-9 border rounded-full font-bold flex items-center justify-center transition-all overflow-hidden ${
                   isDark ? "bg-zinc-800 border-zinc-700 hover:bg-zinc-700" : "bg-gray-100 border-gray-300 hover:bg-gray-200"
                 }`}
               >
-                {username[0].toUpperCase()}
+                {user?.avatar_url ? (
+                  <img src={user.avatar_url} alt={username} className="w-full h-full object-cover" />
+                ) : (
+                  username[0].toUpperCase()
+                )}
               </button>
               
               {isOpen && (

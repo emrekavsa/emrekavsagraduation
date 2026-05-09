@@ -34,7 +34,7 @@ export default function PollDetailPage() {
         .single()
       const { data: c } = await supabase
         .from('comments')
-        .select('*, profiles(username, id)')
+        .select('*, profiles(username, id, avatar_url)')
         .eq('poll_id', id)
         .order('created_at', { ascending: true })
 
@@ -102,8 +102,12 @@ export default function PollDetailPage() {
         )}
 
         <div className="group/comment flex gap-3 py-3">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-[10px]">
-            {comment.profiles?.username?.[0]?.toUpperCase()}
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-[10px] overflow-hidden">
+            {comment.profiles?.avatar_url ? (
+              <img src={comment.profiles.avatar_url} alt={comment.profiles?.username} className="w-full h-full object-cover" />
+            ) : (
+              comment.profiles?.username?.[0]?.toUpperCase()
+            )}
           </div>
 
           <div className="flex-1 min-w-0">

@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase'
 
-export const POLL_SELECT = '*, profiles(username, id), poll_options(id, content, image_url, votes(user_id)), comments(id)'
-
+export const POLL_SELECT = '*, profiles(username, id, avatar_url), poll_options(id, content, image_url, votes(user_id)), comments(id)'
 
 export async function castVote(pollId, optionId, userId) {
   const { error } = await supabase
