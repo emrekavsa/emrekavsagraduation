@@ -6,7 +6,8 @@ import { useApp } from '@/context/AppContext'
 import PollCard from '@/components/PollCard'
 import { formatRelativeTime } from '@/lib/utils'
 import { createCommentAction, deleteCommentAction, updateCommentAction, voteAction } from '@/lib/actions'
-import { POLL_SELECT } from '@/app/page'
+
+const POLL_SELECT = '*, profiles(username, id, avatar_url), poll_options(id, content, image_url, votes(user_id)), comments(id)'
 
 export default function PollDetailPage() {
   const { id } = useParams()
@@ -115,7 +116,6 @@ export default function PollDetailPage() {
     }
   }
 
-  // visitedIds: sonsuz döngüye karşı koruma
   const renderComment = (comment, allComments, depth = 0, visitedIds = new Set()) => {
     if (visitedIds.has(comment.id) || depth > 6) return null
     visitedIds.add(comment.id)
@@ -146,12 +146,18 @@ export default function PollDetailPage() {
                 {isEdited && <span className="opacity-30 italic">(edited)</span>}
               </div>
 
-              {user?.id === comment.user_id && editingId !== comment.id && (
+              {(user?.id === comment.user_id || user?.is_admin) && editingId !== comment.id && (
                 <div className="flex gap-2 opacity-0 group-hover/comment:opacity-100 transition-opacity">
-                  <button onClick={() => { setEditingId(comment.id); setEditContent(comment.content) }} className="w-3.5 h-3.5 opacity-40 hover:opacity-100 dark:invert">
+                  <button
+                    onClick={() => { setEditingId(comment.id); setEditContent(comment.content) }}
+                    className="w-3.5 h-3.5 opacity-40 hover:opacity-100 dark:invert"
+                  >
                     <img src="/edit-icon.svg" alt="Edit" />
                   </button>
-                  <button onClick={() => handleDeleteComment(comment.id)} className="w-3.5 h-3.5 opacity-40 hover:opacity-100">
+                  <button
+                    onClick={() => handleDeleteComment(comment.id)}
+                    className="w-3.5 h-3.5 opacity-40 hover:opacity-100"
+                  >
                     <img src="/delete-icon.svg" alt="Delete" />
                   </button>
                 </div>
