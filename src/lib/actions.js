@@ -2,13 +2,11 @@
 import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
 
-// Server-side client — service role key kullanır, RLS bypass eder
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-// Schemas
 const createPollSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   category: z.string(),
@@ -44,7 +42,6 @@ const deletePollSchema = z.object({
   user_id: z.string().uuid("Invalid user ID"),
 })
 
-// Anket oluştur
 export async function createPollAction(pollData, optionsData) {
   try {
     const validatedData = createPollSchema.parse(pollData)
@@ -58,16 +55,14 @@ export async function createPollAction(pollData, optionsData) {
     if (pollErr) throw new Error(pollErr.message)
 
     for (let i = 0; i < optionsData.length; i++) {
-      const { error: optErr } = await supabase.from("poll_options").insert([
-        {
-          poll_id: poll.id,
-          content: optionsData[i].content,
-          image_url: optionsData[i].image_url ?? null,
-          option_type: optionsData[i].image_url ? "image" : "text", // EKLENDİ
-        },
-      ])
+      const { error: optErr } = await supabase.from("poll_options").insert([{
+        poll_id: poll.id,
+        content: optionsData[i].content,
+        image_url: optionsData[i].image_url ?? null,
+        option_type: optionsData[i].image_url ? "image" : "text",
+      }])
 
-      if (optErr) throw new Error(`Option ${i + 1} error: ${optErr.message}`) // EKLENDİ
+      if (optErr) throw new Error(`Option ${i + 1} error: ${optErr.message}`)
     }
 
     return { success: true, pollId: poll.id }
@@ -76,16 +71,25 @@ export async function createPollAction(pollData, optionsData) {
   }
 }
 
-// Anket sil (PollCard'dan taşındı — güvenli)
 export async function deletePollAction(data) {
   try {
     const validatedData = deletePollSchema.parse(data)
 
-    const { error } = await supabase
-      .from("polls")
-      .delete()
-      .eq("id", validatedData.poll_id)
-      .eq("user_id", validatedData.user_id) // sadece kendi pollunu silebilir
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', validatedData.user_id)
+      .single()
+
+    const isAdmin = profile?.is_admin === true
+
+    let query = supabase.from('polls').delete().eq('id', validatedData.poll_id)
+
+    if (!isAdmin) {
+      query = query.eq('user_id', validatedData.user_id)
+    }
+
+    const { error } = await query
 
     if (error) throw new Error(error.message)
 
@@ -95,14 +99,12 @@ export async function deletePollAction(data) {
   }
 }
 
-// Oy ver
 export async function voteAction(voteData) {
   try {
     const validatedData = voteSchema.parse(voteData)
 
     const { error } = await supabase.from("votes").insert([validatedData])
 
-    // Unique constraint ihlali → zaten oy verilmiş
     if (error) {
       if (error.code === "23505") {
         return { success: false, alreadyVoted: true, error: "already_voted" }
@@ -116,7 +118,6 @@ export async function voteAction(voteData) {
   }
 }
 
-// Yorum ekle
 export async function createCommentAction(commentData) {
   try {
     const validatedData = createCommentSchema.parse(commentData)
@@ -131,16 +132,25 @@ export async function createCommentAction(commentData) {
   }
 }
 
-// Yorum sil
 export async function deleteCommentAction(data) {
   try {
     const validatedData = deleteCommentSchema.parse(data)
 
-    const { error } = await supabase
-      .from("comments")
-      .delete()
-      .eq("id", validatedData.comment_id)
-      .eq("user_id", validatedData.user_id)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', validatedData.user_id)
+      .single()
+
+    const isAdmin = profile?.is_admin === true
+
+    let query = supabase.from('comments').delete().eq('id', validatedData.comment_id)
+
+    if (!isAdmin) {
+      query = query.eq('user_id', validatedData.user_id)
+    }
+
+    const { error } = await query
 
     if (error) throw new Error(error.message)
 
@@ -150,7 +160,6 @@ export async function deleteCommentAction(data) {
   }
 }
 
-// Yorum güncelle
 export async function updateCommentAction(data) {
   try {
     const validatedData = updateCommentSchema.parse(data)
