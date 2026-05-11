@@ -1,15 +1,16 @@
 "use client"
-import { useEffect, useState } from 'react'
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useApp } from '@/context/AppContext'
 import PollCard from '@/components/PollCard'
 import Link from 'next/link'
 import { voteAction } from '@/lib/actions'
+import { useState, useEffect } from 'react'
 
 const POLL_SELECT = '*, profiles(username, id, avatar_url), poll_options(id, content, image_url, votes(user_id)), comments(id)'
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ""
   const { isDark, user, requireLogin } = useApp()
@@ -20,59 +21,26 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
 
   const getResults = async () => {
-    if (query.trim() === "") {
-      setLoading(false)
-      return
-    }
-
+    if (query.trim() === "") { setLoading(false); return }
     setLoading(true)
-
-    const pollsRes = await supabase
-      .from('polls')
-      .select(POLL_SELECT)
-      .ilike('title', `%${query}%`)
-      .limit(10)
-
-    const peopleRes = await supabase
-      .from('profiles')
-      .select('id, username, avatar_url')
-      .ilike('username', `%${query}%`)
-      .limit(10)
-
+    const pollsRes = await supabase.from('polls').select(POLL_SELECT).ilike('title', `%${query}%`).limit(10)
+    const peopleRes = await supabase.from('profiles').select('id, username, avatar_url').ilike('username', `%${query}%`).limit(10)
     setPolls(pollsRes.data || [])
     setPeople(peopleRes.data || [])
     setLoading(false)
   }
 
-  useEffect(() => {
-    getResults()
-  }, [query])
+  useEffect(() => { getResults() }, [query])
 
   const onVote = async (pollId, optionId) => {
     if (!user) return requireLogin()
-    
-    const result = await voteAction({ 
-      poll_id: pollId, 
-      option_id: optionId, 
-      user_id: user.id 
-    })
-
+    const result = await voteAction({ poll_id: pollId, option_id: optionId, user_id: user.id })
     if (result.success) {
-      const { data: updatedPoll } = await supabase
-        .from('polls')
-        .select(POLL_SELECT)
-        .eq('id', pollId)
-        .single()
-
-      if (updatedPoll) {
-        setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
-      }
+      const { data: updatedPoll } = await supabase.from('polls').select(POLL_SELECT).eq('id', pollId).single()
+      if (updatedPoll) setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
     } else {
-      if (result.error.includes('duplicate key') || result.error.includes('unique constraint')) {
-        alert('You have already voted!')
-      } else {
-        alert(result.error)
-      }
+      if (result.alreadyVoted) alert('You have already voted!')
+      else alert(result.error)
     }
   }
 
@@ -86,52 +54,31 @@ export default function SearchPage() {
         <div className={`flex gap-2 p-1 rounded-2xl mb-8 ${isDark ? 'bg-zinc-900' : 'bg-gray-200/50'}`}>
           <button
             onClick={() => setActiveTab('polls')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-              activeTab === 'polls'
-                ? (isDark ? 'bg-zinc-800 text-white' : 'bg-white text-black shadow-sm')
-                : 'opacity-50'
-            }`}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'polls' ? (isDark ? 'bg-zinc-800 text-white' : 'bg-white text-black shadow-sm') : 'opacity-50'}`}
           >
             Polls ({polls.length})
           </button>
           <button
             onClick={() => setActiveTab('people')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-              activeTab === 'people'
-                ? (isDark ? 'bg-zinc-800 text-white' : 'bg-white text-black shadow-sm')
-                : 'opacity-50'
-            }`}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'people' ? (isDark ? 'bg-zinc-800 text-white' : 'bg-white text-black shadow-sm') : 'opacity-50'}`}
           >
             People ({people.length})
           </button>
         </div>
 
         {loading ? (
-          <div className="text-center py-20">
-            <p className="animate-pulse font-bold">Searching...</p>
-          </div>
+          <div className="text-center py-20"><p className="animate-pulse font-bold">Searching...</p></div>
         ) : (
           <div className="space-y-4">
             {activeTab === 'polls' ? (
               polls.length > 0 ? (
-                polls.map(poll => (
-                  <PollCard
-                    key={poll.id}
-                    poll={poll}
-                    user={user}
-                    onVote={onVote}
-                  />
-                ))
+                polls.map(poll => <PollCard key={poll.id} poll={poll} user={user} onVote={onVote} />)
               ) : <p className="text-center py-10 opacity-40">No polls found.</p>
             ) : (
               people.length > 0 ? (
                 people.map(profile => (
-                  <Link
-                    key={profile.id}
-                    href={`/profile/${profile.username}`}
-                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
-                      isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'
-                    }`}
+                  <Link key={profile.id} href={`/profile/${profile.username}`}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}
                   >
                     <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold overflow-hidden">
                       {profile.avatar_url ? (
@@ -152,5 +99,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense>
+      <SearchContent />
+    </Suspense>
   )
 }
