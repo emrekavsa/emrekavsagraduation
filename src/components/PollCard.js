@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatRelativeTime } from '@/lib/utils'
 import { useApp } from '@/context/AppContext'
-import { deletePollAction } from '@/lib/actions'
+import { supabase } from '@/lib/supabase'
 
 export default function PollCard({ poll, user, onVote }) {
   const router = useRouter()
@@ -31,13 +31,17 @@ export default function PollCard({ poll, user, onVote }) {
   const handleDelete = async (e) => {
     e.stopPropagation()
     if (!confirm('Are you sure you want to delete this poll?')) return
+    
+    const { error } = await supabase
+      .from('polls')
+      .delete()
+      .eq('id', poll.id)
+      .eq('user_id', user.id)
 
-    const result = await deletePollAction({ poll_id: poll.id, user_id: user.id })
-
-    if (result.success) {
-      router.refresh()
+    if (error) {
+      alert(error.message)
     } else {
-      alert(result.error)
+      router.refresh()
     }
   }
 
@@ -74,15 +78,15 @@ export default function PollCard({ poll, user, onVote }) {
         </div>
 
         <div className="flex items-center gap-2">
-          {(user?.id === poll.user_id || user?.is_admin) && (
-            <button
-              onClick={handleDelete}
+          {user?.id === poll.user_id && (
+            <button 
+              onClick={handleDelete} 
               className="transition-all opacity-0 group-hover:opacity-100 outline-none"
             >
-              <img
-                src="/delete-icon.svg"
-                alt="Delete"
-                className="w-4 h-4 opacity-40 hover:opacity-100 transition-opacity"
+              <img 
+                src="/delete-icon.svg" 
+                alt="Delete" 
+                className="w-4 h-4 opacity-40 hover:opacity-100 transition-opacity" 
               />
             </button>
           )}
@@ -126,7 +130,11 @@ export default function PollCard({ poll, user, onVote }) {
               {hasImages && (
                 <div className={`relative w-full aspect-[4/3] overflow-hidden border-b border-inherit z-10 ${isDark ? 'bg-black' : 'bg-zinc-100'}`}>
                   {opt.image_url ? (
-                    <img src={opt.image_url} className="w-full h-full object-contain p-1" alt={opt.content} />
+                    <img
+                      src={opt.image_url}
+                      className="w-full h-full object-contain p-1"
+                      alt={opt.content}
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center opacity-20 text-xs italic">no image</div>
                   )}

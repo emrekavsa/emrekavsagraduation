@@ -18,9 +18,8 @@ CREATE TABLE polls (
 CREATE TABLE poll_options (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   poll_id UUID REFERENCES polls(id) ON DELETE CASCADE NOT NULL,
-  option_type TEXT CHECK (option_type IN ('text', 'image')) NOT NULL,
-  content TEXT NOT NULL,
-  image_url TEXT
+  option_type TEXT CHECK (option_type IN ('text', 'image')) NOT NULL, 
+  content TEXT NOT NULL 
 );
 
 CREATE TABLE votes (
@@ -37,9 +36,7 @@ CREATE TABLE comments (
   poll_id UUID REFERENCES polls(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   content TEXT NOT NULL,
-  parent_id UUID REFERENCES comments(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 CREATE TABLE reports (

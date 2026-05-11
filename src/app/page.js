@@ -1,17 +1,17 @@
 "use client"
-import { Suspense } from "react"
+import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useApp } from "@/context/AppContext"
 import PollCard from "@/components/PollCard"
 import { voteAction } from "@/lib/actions"
-import { useState, useEffect } from "react"
 
-export const POLL_SELECT = '*, profiles(username, id, avatar_url), poll_options(id, content, image_url, votes(user_id)), comments(id)'
+const POLL_SELECT = '*, profiles(username, id, avatar_url), poll_options(id, content, image_url, votes(user_id)), comments(id)'
 
-function HomeContent() {
+export default function Home() {
   const searchParams = useSearchParams()
-  const category = searchParams.get('c')
+  const category = searchParams.get('c') 
+  
   const { user, isDark, loading: authLoading, requireLogin } = useApp()
   const [polls, setPolls] = useState([])
   const [dataLoading, setDataLoading] = useState(false)
@@ -20,26 +20,47 @@ function HomeContent() {
   const fetchPolls = async () => {
     setDataLoading(true)
     try {
-      let query = supabase.from("polls").select(POLL_SELECT)
-      if (category) query = query.eq('category', category)
+      let query = supabase
+        .from("polls")
+        .select(POLL_SELECT)
+
+      if (category) {
+        query = query.eq('category', category)
+      }
+
       const { data } = await query.order("created_at", { ascending: false })
+
       if (data) setPolls(data)
     } finally {
       setDataLoading(false)
     }
   }
 
-  useEffect(() => { fetchPolls() }, [category])
+  useEffect(() => {
+    fetchPolls()
+  }, [category])
 
   const onVote = async (pollId, optionId) => {
     if (!user) return requireLogin()
+    
     const result = await voteAction({ poll_id: pollId, option_id: optionId, user_id: user.id })
+
     if (result.success) {
-      const { data: updatedPoll } = await supabase.from('polls').select(POLL_SELECT).eq('id', pollId).single()
-      if (updatedPoll) setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
+      const { data: updatedPoll } = await supabase
+        .from('polls')
+        .select(POLL_SELECT)
+        .eq('id', pollId)
+        .single()
+
+      if (updatedPoll) {
+        setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
+      }
     } else {
-      if (result.alreadyVoted) alert('You have already voted!')
-      else alert(result.error)
+      if (result.error.includes('duplicate key') || result.error.includes('unique constraint')) {
+        alert('You have already voted!')
+      } else {
+        alert(result.error)
+      }
     }
   }
 
@@ -52,7 +73,9 @@ function HomeContent() {
       return votesB - votesA
     }
     if (sortBy === 'interacted') {
-      return (b.comments?.length || 0) - (a.comments?.length || 0)
+      const commentsA = a.comments?.length || 0
+      const commentsB = b.comments?.length || 0
+      return commentsB - commentsA
     }
     return new Date(b.created_at) - new Date(a.created_at)
   })
@@ -75,15 +98,24 @@ function HomeContent() {
             </button>
           ))}
         </div>
+
         <div className="flex flex-col gap-6">
           {sortedPolls.length > 0 ? (
             sortedPolls.map((poll) => (
-              <PollCard key={poll.id} poll={poll} user={user} onVote={onVote} />
+              <PollCard
+                key={poll.id}
+                poll={poll}
+                user={user}
+                onVote={onVote}
+              />
             ))
           ) : !dataLoading && (
-            <div className="text-center py-20 opacity-30 font-bold italic">No polls found.</div>
+            <div className="text-center py-20 opacity-30 font-bold italic">
+              No polls found.
+            </div>
           )}
         </div>
+
         {dataLoading && (
           <div className={`text-center py-10 font-bold animate-pulse ${isDark ? 'text-white' : 'text-blue-500'}`}>
             Loading...
@@ -91,13 +123,5 @@ function HomeContent() {
         )}
       </div>
     </div>
-  )
-}
-
-export default function Home() {
-  return (
-    <Suspense>
-      <HomeContent />
-    </Suspense>
   )
 }

@@ -14,15 +14,10 @@ export function AppProvider({ children }) {
     if (!sessionUser) return null
     const { data } = await supabase
       .from('profiles')
-      .select('username, avatar_url, is_admin')
+      .select('username, avatar_url')
       .eq('id', sessionUser.id)
       .single()
-    return {
-      ...sessionUser,
-      username: data?.username || 'User',
-      avatar_url: data?.avatar_url,
-      is_admin: data?.is_admin || false
-    }
+    return { ...sessionUser, username: data?.username || 'User', avatar_url: data?.avatar_url }
   }
 
   const requireLogin = () => {

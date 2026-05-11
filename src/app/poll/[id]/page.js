@@ -51,19 +51,13 @@ export default function PollDetailPage() {
 
   const onVote = async (pollId, optionId) => {
     if (!user) return requireLogin()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) return requireLogin()
-
-    const result = await voteAction({
-      poll_id: pollId,
-      option_id: optionId,
-      auth_token: session.access_token,
-    })
+    
+    const result = await voteAction({ poll_id: pollId, option_id: optionId, user_id: user.id })
 
     if (result.success) {
       fetchData()
     } else {
-      if (result.alreadyVoted) {
+      if (result.error.includes('duplicate key') || result.error.includes('unique constraint')) {
         alert('You have already voted!')
       } else {
         alert(result.error)
@@ -75,16 +69,14 @@ export default function PollDetailPage() {
     if (e) e.preventDefault()
     const content = parentId ? replyContent : newComment
     if (!user || !content.trim() || submitting) return
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) return requireLogin()
 
     setSubmitting(true)
-
+    
     const result = await createCommentAction({
       poll_id: id,
+      user_id: user.id,
       content: content.trim(),
-      parent_id: parentId || null,
-      auth_token: session.access_token,
+      parent_id: parentId
     })
 
     if (result.success) {
@@ -100,13 +92,8 @@ export default function PollDetailPage() {
 
   const handleDeleteComment = async (commentId) => {
     if (!confirm('Delete this comment?')) return
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) return requireLogin()
-
-    const result = await deleteCommentAction({
-      comment_id: commentId,
-      auth_token: session.access_token,
-    })
+    
+    const result = await deleteCommentAction({ comment_id: commentId, user_id: user.id })
     if (result.success) fetchData()
     else alert(result.error)
   }
@@ -114,13 +101,11 @@ export default function PollDetailPage() {
   const handleUpdateComment = async (commentId) => {
     const updatedText = editContent.trim()
     if (!updatedText) return
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) return requireLogin()
-
+    
     const result = await updateCommentAction({
       comment_id: commentId,
-      content: updatedText,
-      auth_token: session.access_token,
+      user_id: user.id,
+      content: updatedText
     })
 
     if (result.success) {
@@ -131,10 +116,7 @@ export default function PollDetailPage() {
     }
   }
 
-  const renderComment = (comment, allComments, depth = 0, visitedIds = new Set()) => {
-    if (visitedIds.has(comment.id) || depth > 6) return null
-    visitedIds.add(comment.id)
-
+  const renderComment = (comment, allComments, depth = 0) => {
     const replies = allComments.filter(r => r.parent_id === comment.id)
     const isEdited = comment.updated_at && (new Date(comment.updated_at) - new Date(comment.created_at) > 1000)
 
@@ -161,18 +143,12 @@ export default function PollDetailPage() {
                 {isEdited && <span className="opacity-30 italic">(edited)</span>}
               </div>
 
-              {(user?.id === comment.user_id || user?.is_admin) && editingId !== comment.id && (
+              {user?.id === comment.user_id && editingId !== comment.id && (
                 <div className="flex gap-2 opacity-0 group-hover/comment:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => { setEditingId(comment.id); setEditContent(comment.content) }}
-                    className="w-3.5 h-3.5 opacity-40 hover:opacity-100 dark:invert"
-                  >
+                  <button onClick={() => { setEditingId(comment.id); setEditContent(comment.content) }} className="w-3.5 h-3.5 opacity-40 hover:opacity-100 dark:invert">
                     <img src="/edit-icon.svg" alt="Edit" />
                   </button>
-                  <button
-                    onClick={() => handleDeleteComment(comment.id)}
-                    className="w-3.5 h-3.5 opacity-40 hover:opacity-100"
-                  >
+                  <button onClick={() => handleDeleteComment(comment.id)} className="w-3.5 h-3.5 opacity-40 hover:opacity-100">
                     <img src="/delete-icon.svg" alt="Delete" />
                   </button>
                 </div>
@@ -226,7 +202,7 @@ export default function PollDetailPage() {
             )}
           </div>
         </div>
-        {replies.map(r => renderComment(r, allComments, depth + 1, new Set(visitedIds)))}
+        {replies.map(r => renderComment(r, allComments, depth + 1))}
       </div>
     )
   }
@@ -244,6 +220,7 @@ export default function PollDetailPage() {
           poll={poll}
           user={user}
           onVote={onVote}
+          onCommentClick={() => commentInputRef.current?.focus()}
         />
 
         <div className={`mt-8 p-6 rounded-3xl border shadow-sm ${isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-gray-100 text-black'}`}>
