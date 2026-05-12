@@ -1,1 +1,1 @@
-implemented next.js server actions and refactored voting
+added admin page, comment and poll reporting button, simplified navbar and login popup design.

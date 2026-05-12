@@ -43,3 +43,7 @@ data/public/gaming.svg.i
 data/public/movie.svg.i
 data/public/sports.svg.i
 data/src/lib/actions.js.i
+data/public/report.svg.i
+data/src/lib/vote.js.i
+data/src/app/admin/page.js.i
+data/src/components/ReportModal.js.i
