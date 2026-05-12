@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation'
 import { formatRelativeTime } from '@/lib/utils'
 import { useApp } from '@/context/AppContext'
 import ReportModal from '@/components/ReportModal'
-// GÜVENLİK FİX: Silme işlemini artık Server Action üzerinden yapıyoruz
-import { deletePollAction } from '@/lib/actions' 
+import { deletePollAction } from '@/lib/actions'
 
 export default function PollCard({ poll, user, onVote, onDelete }) {
   const router = useRouter()
@@ -19,11 +18,7 @@ export default function PollCard({ poll, user, onVote, onDelete }) {
   const hasImages = poll.poll_options.some(opt => opt.image_url)
   const commentCount = poll.comments?.length || 0
   const category = poll.category || 'General'
-
-  let totalVotes = 0
-  poll.poll_options.forEach(opt => {
-    totalVotes += (opt.votes?.length || 0)
-  })
+  const totalVotes = poll.poll_options.reduce((sum, opt) => sum + (opt.votes?.length || 0), 0)
 
   const userVote = user
     ? poll.poll_options.find(opt => opt.votes?.some(v => v.user_id === user.id))
@@ -31,47 +26,35 @@ export default function PollCard({ poll, user, onVote, onDelete }) {
 
   const hasVoted = !!userVote
 
-  // GÜVENLİK FİX: Client-side silme yerine Server Action'a devredildi
-  const handleDelete = async (e) => {
-    e.stopPropagation()
+  const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this poll?')) return
-    
-    // İşlemi yapanın (user.id) kimliği de server'a gidiyor
     const res = await deletePollAction(user.id, poll.id)
-
     if (res.success) {
-      // Eğer Home sayfasından çağrıldıysa state'i anında güncelle
-      if (onDelete) {
-         onDelete(poll.id)
-      } else {
-         router.refresh()
-      }
+      onDelete ? onDelete(poll.id) : router.refresh()
     } else {
       alert("Failed to delete: " + res.error)
     }
   }
 
-  const handleShare = (e) => {
-    e.stopPropagation()
-    const url = `${window.location.origin}/poll/${poll.id}`
-    navigator.clipboard.writeText(url)
+  const handleShare = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/poll/${poll.id}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 700)
   }
 
   const containerClass = hasImages
-    ? `grid grid-cols-1 ${poll.poll_options.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`
+    ? `grid grid-cols-2 ${poll.poll_options.length === 3 ? 'grid-cols-3' : ''} gap-4`
     : 'flex flex-col gap-2'
 
   return (
     <div className={`group p-5 border rounded-3xl transition-all relative ${
       isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-gray-200 text-black'
     }`}>
-      
+
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-sm">
           <div onClick={() => router.push(`/profile/${authorName}`)} className="flex items-center gap-2 cursor-pointer">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
               {poll.profiles?.avatar_url ? (
                 <img src={poll.profiles.avatar_url} alt={authorName} className="w-full h-full object-cover" />
               ) : (
@@ -80,31 +63,26 @@ export default function PollCard({ poll, user, onVote, onDelete }) {
             </div>
             <span className="font-semibold hover:underline">@{authorName}</span>
           </div>
-          <span className="opacity-30 text-[12px]">• {formatRelativeTime(poll.created_at)}</span>
+          <span className="opacity-30 text-xs">• {formatRelativeTime(poll.created_at)}</span>
         </div>
 
         <div className="flex items-center gap-2">
           {user && user.id !== poll.user_id && (
-            <button 
+            <button
               onClick={() => setIsReportOpen(true)}
               className="p-2 opacity-30 hover:opacity-100 hover:bg-red-500/10 rounded-full transition-all"
             >
-              <img 
-                src="/report.svg" 
-                alt="Report" 
-                className={`w-4 h-4 ${isDark ? 'invert' : ''}`} 
-              />
+              <img src="/report.svg" alt="Report" className={`w-4 h-4 ${isDark ? 'invert' : ''}`} />
             </button>
           )}
 
-          {/* SİLME BUTONU: SAHİBİ VEYA ADMİN GÖREBİLİR */}
           {(user?.id === poll.user_id || user?.is_admin) && (
             <button onClick={handleDelete} className="transition-all opacity-0 group-hover:opacity-100 outline-none">
               <img src="/delete-icon.svg" alt="Delete" className="w-4 h-4 opacity-40 hover:opacity-100 transition-opacity" />
             </button>
           )}
-          
-          <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+
+          <div className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
             isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-100 text-gray-500'
           }`}>
             {category}
@@ -134,9 +112,9 @@ export default function PollCard({ poll, user, onVote, onDelete }) {
             >
               {hasVoted && (
                 <div
-                  className={`absolute left-0 top-0 bottom-0 transition-all duration-1000 ease-out z-0
-                    ${isMyChoice ? 'bg-blue-500/10' : (isDark ? 'bg-zinc-800' : 'bg-gray-100')}
-                  `}
+                  className={`absolute left-0 top-0 bottom-0 transition-all duration-1000 ease-out z-0 ${
+                    isMyChoice ? 'bg-blue-500/10' : (isDark ? 'bg-zinc-800' : 'bg-gray-100')
+                  }`}
                   style={{ width: `${percent}%` }}
                 />
               )}
@@ -153,14 +131,13 @@ export default function PollCard({ poll, user, onVote, onDelete }) {
 
               <div className={`relative z-10 flex w-full items-center justify-between ${hasImages ? 'p-4' : 'flex-1 text-left'}`}>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm md:text-base">{opt.content}</span>
+                  <span className="font-semibold text-sm">{opt.content}</span>
                   {isMyChoice && <span className="text-blue-500 font-bold">✓</span>}
                 </div>
-
                 {hasVoted && (
                   <div className="flex flex-col items-end">
                     <span className="font-bold text-sm">{percent}%</span>
-                    <span className="text-[9px] opacity-40">{voteCount} votes</span>
+                    <span className="text-xs opacity-40">{voteCount} votes</span>
                   </div>
                 )}
               </div>
@@ -185,15 +162,15 @@ export default function PollCard({ poll, user, onVote, onDelete }) {
             <img src="/share.svg" alt="" className={`w-4 h-4 ${isDark || copied ? 'invert' : ''}`} />
           </button>
         </div>
-        {hasVoted && <div className="text-[10px] opacity-40 font-black uppercase tracking-tighter">{totalVotes} total votes</div>}
+        {hasVoted && <div className="text-xs opacity-40 font-black uppercase tracking-tighter">{totalVotes} total votes</div>}
       </div>
 
-      <ReportModal 
-        isOpen={isReportOpen} 
-        onClose={() => setIsReportOpen(false)} 
-        targetId={poll.id} 
-        targetType="Poll" 
-        userId={user?.id} 
+      <ReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        targetId={poll.id}
+        targetType="Poll"
+        userId={user?.id}
       />
     </div>
   )

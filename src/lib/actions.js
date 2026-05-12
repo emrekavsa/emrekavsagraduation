@@ -162,12 +162,10 @@ export async function reportAction(data) {
   }
 }
 
-// GÜVENLİK FİX: Sadece gerçek adminler DB'ye ban atabilir.
 export async function banUserAction(adminId, userId, status = true) {
   try {
     if (!adminId) throw new Error("Unauthorized: Admin ID is required")
 
-    // 1. İşlemi tetikleyen kişi gerçekten admin mi kontrol et
     const { data: adminCheck } = await supabase
       .from('profiles')
       .select('is_admin')
@@ -176,7 +174,6 @@ export async function banUserAction(adminId, userId, status = true) {
 
     if (!adminCheck?.is_admin) throw new Error("CRITICAL: Unauthorized admin action attempt.")
 
-    // 2. Yetki doğrulandı, işlemi yap
     const { error } = await supabase
       .from('profiles')
       .update({ isbanned: status })
@@ -189,7 +186,6 @@ export async function banUserAction(adminId, userId, status = true) {
   }
 }
 
-// GÜVENLİK FİX: Sadece gerçek adminler raporu kapatabilir.
 export async function resolveReportAction(adminId, reportId) {
   try {
     if (!adminId) throw new Error("Unauthorized: Admin ID is required")
@@ -214,7 +210,6 @@ export async function resolveReportAction(adminId, reportId) {
   }
 }
 
-// GÜVENLİK FİX: Sadece gerçek adminler anketi silebilir.
 export async function deletePollAction(adminId, pollId) {
   try {
     if (!adminId) throw new Error("Unauthorized: Admin ID is required")

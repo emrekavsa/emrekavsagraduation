@@ -13,7 +13,6 @@ export function AppProvider({ children }) {
   const fetchProfile = async (sessionUser) => {
     if (!sessionUser) return null
     
-    // BURAYI GÜNCELLEDİM: is_admin sütununu da artık çekiyoruz
     const { data } = await supabase
       .from('profiles')
       .select('username, avatar_url, is_admin') 
@@ -24,7 +23,7 @@ export function AppProvider({ children }) {
       ...sessionUser, 
       username: data?.username || 'User', 
       avatar_url: data?.avatar_url,
-      is_admin: data?.is_admin || false // Buraya ekledik ki user objesinde adminlik gözüksün
+      is_admin: data?.is_admin || false 
     }
   }
 

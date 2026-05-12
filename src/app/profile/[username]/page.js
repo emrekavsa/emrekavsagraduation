@@ -4,7 +4,7 @@ import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useApp } from "@/context/AppContext"
 import PollCard from "@/components/PollCard"
-import { voteAction } from "@/lib/actions"
+import { handleVote } from "@/lib/vote"
 
 const POLL_SELECT = '*, profiles(username, id, avatar_url), poll_options(id, content, image_url, votes(user_id)), comments(id)'
 
@@ -51,11 +51,8 @@ export default function ProfilePage() {
       const file = event.target.files[0]
       if (!file) return
 
-      // GÜVENLİK FİX: Rastgele isim yerine her kullanıcı için sabit dosya adı.
-      // Uzantıyı sildik ki jpg/png fark etmeksizin hep aynı dosyanın üstüne yazılsın.
       const filePath = `${currentUser.id}/avatar`
 
-      // GÜVENLİK FİX: upsert: true ile eskisinin üstüne yazıyoruz
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true })
@@ -66,7 +63,6 @@ export default function ProfilePage() {
         .from('avatars')
         .getPublicUrl(filePath)
 
-      // GÜVENLİK FİX: Tarayıcı Cache'ini (Önbelleğini) kırmak için linke zaman damgası ekliyoruz
       const urlWithCacheBuster = `${publicUrl}?t=${new Date().getTime()}`
 
       const { error: updateError } = await supabase
@@ -85,33 +81,10 @@ export default function ProfilePage() {
     }
   }
 
-  const onVote = async (pollId, optionId) => {
-    if (!currentUser) return requireLogin()
-    
-    const result = await voteAction({ 
-      poll_id: pollId, 
-      option_id: optionId, 
-      user_id: currentUser.id 
-    })
-
-    if (result.success) {
-      const { data: updatedPoll } = await supabase
-        .from('polls')
-        .select(POLL_SELECT)
-        .eq('id', pollId)
-        .single()
-
-      if (updatedPoll) {
-        setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
-      }
-    } else {
-      if (result.error.includes('duplicate key') || result.error.includes('unique constraint')) {
-        alert('You have already voted!')
-      } else {
-        alert(result.error)
-      }
-    }
-  }
+  const onVote = (pollId, optionId) => handleVote({
+    user: currentUser, pollId, optionId, requireLogin,
+    onSuccess: (updatedPoll) => setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
+  })
 
   if (loading) return null
 
@@ -128,7 +101,7 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
-          
+
           {isOwnProfile && (
             <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity">
               <input type="file" accept="image/*" className="hidden" onChange={uploadAvatar} disabled={uploading} />
@@ -145,13 +118,12 @@ export default function ProfilePage() {
 
       <div className="flex flex-col gap-6">
         {polls.map((poll) => (
-          <PollCard 
-            key={poll.id} 
-            poll={poll} 
-            user={currentUser} 
-            onVote={onVote} 
-            // Profilde anket silindiğinde sayfayı yenilemeden direkt aradan çıkarır
-            onDelete={(deletedId) => setPolls(prev => prev.filter(p => p.id !== deletedId))} 
+          <PollCard
+            key={poll.id}
+            poll={poll}
+            user={currentUser}
+            onVote={onVote}
+            onDelete={(deletedId) => setPolls(prev => prev.filter(p => p.id !== deletedId))}
           />
         ))}
       </div>

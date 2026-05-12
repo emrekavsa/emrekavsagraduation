@@ -1,6 +1,6 @@
 "use client"
 import { useState } from 'react'
-import { reportAction } from '@/lib/actions' // DİKKAT: reportPollAction yerine reportAction kullanıyoruz
+import { reportAction } from '@/lib/actions'
 
 export default function ReportModal({ isOpen, onClose, targetId, targetType, userId }) {
   const [reason, setReason] = useState('Spam')
@@ -18,14 +18,12 @@ export default function ReportModal({ isOpen, onClose, targetId, targetType, use
 
     setLoading(true)
     
-    // Anket mi Yorum mu? Ona göre doğru ID alanını dolduruyoruz
     const payload = {
       reported_by: userId,
       reason: reason,
       ...(targetType === "Comment" ? { comment_id: targetId } : { poll_id: targetId })
     }
 
-    // Ortak Action'ı çağır
     const res = await reportAction(payload)
     
     if (res.success) {

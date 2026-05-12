@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useApp } from '@/context/AppContext'
 import PollCard from '@/components/PollCard'
-import ReportModal from '@/components/ReportModal' // EKLENDİ
+import ReportModal from '@/components/ReportModal'
 import { formatRelativeTime } from '@/lib/utils'
 import { createCommentAction, deleteCommentAction, updateCommentAction, voteAction } from '@/lib/actions'
 
@@ -23,8 +23,6 @@ export default function PollDetailPage() {
   const [editContent, setEditContent] = useState('')
   const [replyingTo, setReplyingTo] = useState(null)
   const [replyContent, setReplyContent] = useState('')
-
-  // Raporlama State'leri EKLENDİ
   const [isReportOpen, setIsReportOpen] = useState(false)
   const [reportTarget, setReportTarget] = useState({ id: null, type: null })
 
@@ -154,10 +152,7 @@ export default function PollDetailPage() {
                 {isEdited && <span className="opacity-30 italic">(edited)</span>}
               </div>
 
-              {/* BUTON GRUBU GÜNCELLENDİ */}
               <div className="flex gap-2 opacity-0 group-hover/comment:opacity-100 transition-opacity items-center">
-                
-                {/* Yorum Başkasına Aitse Report Butonu Çıkar */}
                 {user && user.id !== comment.user_id && (
                   <button 
                     onClick={() => openReportModal(comment.id, "Comment")}
@@ -166,8 +161,6 @@ export default function PollDetailPage() {
                     <img src="/report.svg" alt="Report" className={`w-3.5 h-3.5 ${isDark ? 'invert' : ''}`} />
                   </button>
                 )}
-
-                {/* Yorum Sana Aitse Edit/Delete Butonları Çıkar */}
                 {user?.id === comment.user_id && editingId !== comment.id && (
                   <>
                     <button onClick={() => { setEditingId(comment.id); setEditContent(comment.content) }} className="w-3.5 h-3.5 opacity-40 hover:opacity-100 dark:invert">
@@ -280,8 +273,7 @@ export default function PollDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* REPORT MODAL EN DIŞA EKLENDİ */}
+      
       <ReportModal 
         isOpen={isReportOpen} 
         onClose={() => setIsReportOpen(false)} 

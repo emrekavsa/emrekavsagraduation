@@ -27,72 +27,53 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`flex justify-between items-center p-3 px-6 border-b sticky top-0 z-50 ${
-        isDark
-          ? "bg-black border-zinc-800 text-white"
-          : "bg-white border-gray-100 text-black"
+      className={`flex items-center justify-between px-6 h-14 border-b sticky top-0 z-50 gap-4 ${
+        isDark ? "bg-black border-zinc-800 text-white" : "bg-white border-gray-100 text-black"
       }`}
     >
-      <div className="w-[120px] md:w-[240px] flex items-center justify-start">
-        <Link
-          href="/"
-          className="flex items-center group transition-opacity hover:opacity-80"
-        >
-          <span className="text-4xl lowercase tracking-wide select-none font-[family-name:var(--font-aktura)] pt-1">
-            purgatory
-          </span>
-        </Link>
-      </div>
+      {/* Logo */}
+      <Link href="/" className="hover:opacity-70 transition-opacity shrink-0">
+        <span className="text-4xl lowercase tracking-wide select-none font-[family-name:var(--font-aktura)] pt-1">
+          purgatory
+        </span>
+      </Link>
 
-      <div className="flex-1 max-w-xl mx-4 relative">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2.5"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </div>
+      {/* Search */}
+      <div className="flex-1 max-w-md relative">
+        <svg
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 pointer-events-none"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
         <input
           type="text"
           placeholder="Search anything"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={handleSearch}
-          className={`w-full h-10 pl-11 pr-4 rounded-full text-sm outline-none transition-all border-transparent border
-            ${
-              isDark
-                ? "bg-zinc-800 focus:bg-zinc-700 text-white focus:border-zinc-600"
-                : "bg-gray-100 focus:bg-white text-black focus:border-gray-300 focus:ring-1 focus:ring-gray-200"
-            }`}
+          className={`w-full h-9 pl-9 pr-4 rounded-full text-sm outline-none transition-all ${
+            isDark
+              ? "bg-zinc-800 text-white placeholder:text-zinc-500 focus:bg-zinc-700"
+              : "bg-gray-100 text-black placeholder:text-gray-400 focus:bg-white focus:ring-1 focus:ring-gray-200"
+          }`}
         />
       </div>
 
-      <div className="w-auto md:w-[240px] flex items-center justify-end gap-3">
+      <div className="flex items-center gap-2 shrink-0">
         {!user ? (
           <button
             onClick={requireLogin}
-            className="p-2 px-5 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-700 transition-all active:scale-95"
+            className="h-9 px-4 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-700 transition-all"
           >
-            Log In
+            Log in
           </button>
         ) : (
           <>
-            {user.is_admin === true && (
+            {user.is_admin && (
               <Link
                 href="/admin"
-                className={`p-2 px-4 rounded-full font-bold text-sm transition-all active:scale-95 ${
-                  isDark 
-                    ? "bg-zinc-800 text-white hover:bg-zinc-700 border border-zinc-700" 
-                    : "bg-gray-100 text-black hover:bg-gray-200 border border-gray-200"
-                }`}
+                className="text-xs font-bold opacity-50 hover:opacity-100 transition-opacity px-2"
               >
                 Admin
               </Link>
@@ -100,26 +81,20 @@ export default function Navbar() {
 
             <Link
               href="/create"
-              className="p-2 px-4 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-700 hidden md:block transition-all active:scale-95"
+              className="h-9 px-4 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-700 transition-all flex items-center"
             >
-              + Create
+              Create
             </Link>
 
             <div className="relative">
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-9 h-9 border rounded-full font-bold flex items-center justify-center transition-all overflow-hidden ${
-                  isDark
-                    ? "bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
-                    : "bg-gray-100 border-gray-300 hover:bg-gray-200"
+                className={`w-8 h-8 rounded-full font-bold text-sm flex items-center justify-center overflow-hidden border transition-all ${
+                  isDark ? "bg-zinc-800 border-zinc-700 hover:bg-zinc-700" : "bg-gray-100 border-gray-200 hover:bg-gray-200"
                 }`}
               >
                 {user?.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={username}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={user.avatar_url} alt={username} className="w-full h-full object-cover" />
                 ) : (
                   username[0].toUpperCase()
                 )}
@@ -127,33 +102,22 @@ export default function Navbar() {
 
               {isOpen && (
                 <div
-                  className={`absolute right-0 mt-2 w-48 border shadow-2xl rounded-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 ${
-                    isDark
-                      ? "bg-zinc-900 border-zinc-800 text-white"
-                      : "bg-white border-gray-200 text-black"
+                  className={`absolute right-0 mt-2 w-44 border shadow-lg rounded-xl p-1.5 z-50 ${
+                    isDark ? "bg-zinc-900 border-zinc-800 text-white" : "bg-white border-gray-200 text-black"
                   }`}
                 >
-                  {user.is_admin === true && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setIsOpen(false)}
-                      className="block w-full text-left p-2 hover:bg-gray-500/10 rounded-lg text-sm font-bold text-blue-500 md:hidden"
-                    >
-                      Admin Panel
-                    </Link>
-                  )}
                   <Link
                     href={`/profile/${username}`}
                     onClick={() => setIsOpen(false)}
-                    className="block w-full text-left p-2 hover:bg-gray-500/10 rounded-lg text-sm font-bold"
+                    className="block w-full text-left px-3 py-2 hover:bg-gray-500/10 rounded-lg text-sm font-bold"
                   >
-                    View Profile
+                    View profile
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left p-2 text-red-500 hover:bg-red-500/10 rounded-lg text-sm font-bold"
+                    className="w-full text-left px-3 py-2 text-red-500 hover:bg-red-500/10 rounded-lg text-sm font-bold"
                   >
-                    Sign Out
+                    Sign out
                   </button>
                 </div>
               )}

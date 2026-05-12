@@ -55,28 +55,39 @@ export default function Login({ isOpen, onClose }) {
     }
   }
 
+  const inputClass = `w-full px-4 py-2.5 border rounded-xl outline-none text-sm transition-all ${
+    isDark ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-gray-50 border-gray-200 text-black'
+  }`
+
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className={`p-6 w-full max-w-sm border rounded-3xl shadow-2xl ${isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-gray-200 text-black'}`}>
+      <div className={`p-6 w-full max-w-sm border rounded-2xl ${
+        isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-gray-200 text-black'
+      }`}>
 
-        <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-zinc-800 rounded-2xl">
+        {/* login register switcher */}
+        <div className={`flex gap-1 mb-5 p-1 rounded-xl ${isDark ? 'bg-zinc-800' : 'bg-gray-100'}`}>
           <button
             type="button"
             onClick={() => setMode('login')}
-            className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${mode === 'login' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500'}`}
+            className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all ${
+              mode === 'login' ? 'bg-blue-600 text-white' : isDark ? 'text-zinc-400' : 'text-gray-400'
+            }`}
           >
-            Log In
+            Log in
           </button>
           <button
             type="button"
             onClick={() => setMode('register')}
-            className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${mode === 'register' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500'}`}
+            className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all ${
+              mode === 'register' ? 'bg-blue-600 text-white' : isDark ? 'text-zinc-400' : 'text-gray-400'
+            }`}
           >
             Register
           </button>
         </div>
 
-        <form onSubmit={handleAuth} className="flex flex-col gap-3">
+        <form onSubmit={handleAuth} className="flex flex-col gap-2.5">
           {mode === 'register' && (
             <input
               name="username"
@@ -84,7 +95,7 @@ export default function Login({ isOpen, onClose }) {
               required
               value={form.username}
               onChange={handleChange}
-              className={`p-4 border rounded-2xl outline-none text-sm ${isDark ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-300'}`}
+              className={inputClass}
             />
           )}
           <input
@@ -94,7 +105,7 @@ export default function Login({ isOpen, onClose }) {
             required
             value={form.email}
             onChange={handleChange}
-            className={`p-4 border rounded-2xl outline-none text-sm ${isDark ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-300'}`}
+            className={inputClass}
           />
           <input
             name="password"
@@ -103,22 +114,22 @@ export default function Login({ isOpen, onClose }) {
             required
             value={form.password}
             onChange={handleChange}
-            className={`p-4 border rounded-2xl outline-none text-sm ${isDark ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-300'}`}
+            className={inputClass}
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="p-4 mt-2 bg-blue-600 text-white rounded-2xl font-bold disabled:opacity-50 transition-all shadow-lg shadow-blue-500/20"
+            className="w-full py-2.5 mt-1 bg-blue-600 text-white rounded-xl font-bold text-sm disabled:opacity-50 transition-all hover:bg-blue-700"
           >
-            {loading ? 'Processing...' : (mode === 'login' ? 'Continue' : 'Create Account')}
+            {loading ? 'Processing...' : (mode === 'login' ? 'Continue' : 'Create account')}
           </button>
         </form>
 
         <button
           type="button"
           onClick={onClose}
-          className="mt-6 w-full text-center text-xs font-semibold text-gray-400 hover:text-red-500 transition-colors uppercase tracking-widest"
+          className="mt-4 w-full text-center text-xs text-gray-400 hover:text-red-500 transition-colors"
         >
           Dismiss
         </button>
