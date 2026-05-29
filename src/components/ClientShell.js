@@ -11,14 +11,12 @@ export default function ClientShell({ children }) {
     <div className={`${isDark ? 'bg-black text-white' : 'bg-white text-black'} transition-colors min-h-screen`}>
       <div className="flex flex-col min-h-screen relative">
         <Navbar onShowLogin={() => setIsLoginOpen(true)} />
-
         <div className="flex flex-1 relative">
           <Sidebar />
-          <main className="flex-1 w-full min-w-0">
+          <main className="flex-1 w-full min-w-0 lg:ml-64">
             {children}
           </main>
         </div>
-
         <Login
           isOpen={isLoginOpen}
           onClose={() => setIsLoginOpen(false)}

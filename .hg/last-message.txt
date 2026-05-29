@@ -1,1 +1,1 @@
-visual changes on comments reply section.
+added realtime to poll detail page.

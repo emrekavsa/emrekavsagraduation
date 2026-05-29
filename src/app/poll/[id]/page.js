@@ -54,6 +54,26 @@ export default function PollDetailPage() {
   useEffect(() => {
     if (id) fetchData();
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel("votes-" + id)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "votes",
+        },
+        () => fetchData(),
+      )
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, [id]);
+
   const onVote = async (pollId, optionId) => {
     if (!user) return requireLogin();
 
