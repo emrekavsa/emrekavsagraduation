@@ -1,9 +1,14 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useApp } from '@/context/AppContext'
 
-export default function Login({ isOpen, onClose }) {
+type LoginProps = {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export default function Login({ isOpen, onClose }: LoginProps) {
   const { isDark } = useApp()
   const [mode, setMode] = useState('login')
   const [form, setForm] = useState({ email: '', password: '', username: '' })
@@ -18,12 +23,12 @@ export default function Login({ isOpen, onClose }) {
 
   if (!isOpen) return null
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const handleAuth = async (e) => {
-    if (e) e.preventDefault()
+  const handleAuth = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     if (loading) return
 
     setLoading(true)
@@ -49,7 +54,7 @@ export default function Login({ isOpen, onClose }) {
         setMode('login')
       }
     } catch (err) {
-      alert(err.message || "An error occurred")
+      alert(err instanceof Error ? err.message : "An error occurred")
     } finally {
       setLoading(false)
     }

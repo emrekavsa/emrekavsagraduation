@@ -1,25 +1,26 @@
 "use client"
-import { useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useApp } from '@/context/AppContext'
 import PollCard from '@/components/PollCard'
 import Link from 'next/link'
 import { handleVote } from '@/lib/vote'
+import type { Poll, Profile } from '@/types/domain'
 
 const POLL_SELECT = '*, profiles(username, id, avatar_url), poll_options(id, content, image_url, votes(user_id)), comments(id)'
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ""
   const { isDark, user, requireLogin } = useApp()
 
   const [activeTab, setActiveTab] = useState('polls')
-  const [polls, setPolls] = useState([])
-  const [people, setPeople] = useState([])
+  const [polls, setPolls] = useState<Poll[]>([])
+  const [people, setPeople] = useState<Profile[]>([])
   const [loading, setLoading] = useState(false)
 
-  const getResults = async () => {
+  const getResults = useCallback(async () => {
     if (query.trim() === "") {
       setLoading(false)
       return
@@ -39,18 +40,18 @@ export default function SearchPage() {
       .ilike('username', `%${query}%`)
       .limit(10)
 
-    setPolls(pollsRes.data || [])
-    setPeople(peopleRes.data || [])
+    setPolls((pollsRes.data || []) as Poll[])
+    setPeople((peopleRes.data || []) as Profile[])
     setLoading(false)
-  }
-
-  useEffect(() => {
-    getResults()
   }, [query])
 
-  const onVote = (pollId, optionId) => handleVote({
+  useEffect(() => {
+    void Promise.resolve().then(getResults)
+  }, [getResults])
+
+  const onVote = (pollId: string, optionId: string) => handleVote({
     user, pollId, optionId, requireLogin,
-    onSuccess: (updatedPoll) => setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
+    onSuccess: (updatedPoll: Poll) => setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
   })
 
   return (
@@ -112,7 +113,7 @@ export default function SearchPage() {
                   >
                     <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold overflow-hidden">
                       {profile.avatar_url ? (
-                        <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" />
+                        <img src={profile.avatar_url} alt={profile.username ?? "User"} className="w-full h-full object-cover" />
                       ) : (
                         profile.username ? profile.username[0].toUpperCase() : "U"
                       )}
@@ -129,5 +130,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={null}>
+      <SearchContent />
+    </Suspense>
   )
 }

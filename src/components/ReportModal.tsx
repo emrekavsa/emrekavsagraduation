@@ -1,8 +1,17 @@
 "use client"
 import { useState } from 'react'
 import { reportAction } from '@/lib/actions'
+import type { ReportTargetType } from '@/types/domain'
 
-export default function ReportModal({ isOpen, onClose, targetId, targetType, userId }) {
+type ReportModalProps = {
+  isOpen: boolean
+  onClose: () => void
+  targetId?: string | null
+  targetType?: ReportTargetType | null
+  userId?: string
+}
+
+export default function ReportModal({ isOpen, onClose, targetId, targetType, userId }: ReportModalProps) {
   const [reason, setReason] = useState('Spam')
   const [loading, setLoading] = useState(false)
 
@@ -18,6 +27,8 @@ export default function ReportModal({ isOpen, onClose, targetId, targetType, use
 
     setLoading(true)
     
+    if (!targetId || !targetType) return
+
     const payload = {
       reported_by: userId,
       reason: reason,

@@ -1,27 +1,28 @@
 "use client"
-import { useEffect, useState } from "react"
+import { Suspense, useCallback, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useApp } from "@/context/AppContext"
 import PollCard from "@/components/PollCard"
 import { handleVote } from "@/lib/vote"
+import type { Poll } from "@/types/domain"
 
 const POLL_SELECT = '*, profiles(username, id, avatar_url), poll_options(id, content, image_url, votes(user_id)), comments(id)'
 const ITEMS_PER_PAGE = 10
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams()
   const category = searchParams.get('c')
 
   const { user, isDark, loading: authLoading, requireLogin } = useApp()
-  const [polls, setPolls] = useState([])
+  const [polls, setPolls] = useState<Poll[]>([])
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [dataLoading, setDataLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
 
-  const fetchPolls = async (pageIndex, isNewFilter) => {
+  const fetchPolls = useCallback(async (pageIndex: number, isNewFilter: boolean) => {
     isNewFilter ? setDataLoading(true) : setLoadingMore(true)
 
     try {
@@ -43,21 +44,22 @@ export default function Home() {
 
       if (error) throw error
 
-      setHasMore(data.length === ITEMS_PER_PAGE)
-      setPolls(prev => isNewFilter ? data : [...prev, ...data])
+      const nextPolls = (data || []) as Poll[]
+      setHasMore(nextPolls.length === ITEMS_PER_PAGE)
+      setPolls(prev => isNewFilter ? nextPolls : [...prev, ...nextPolls])
     } catch (error) {
-      console.error("Fetch error:", error.message)
+      console.error("Fetch error:", error instanceof Error ? error.message : error)
     } finally {
       setDataLoading(false)
       setLoadingMore(false)
     }
-  }
+  }, [category, sortBy])
 
   useEffect(() => {
-  if (authLoading) return
-  setPage(0)
-  fetchPolls(0, true)
-}, [category, sortBy, authLoading])
+    if (authLoading) return
+    setPage(0)
+    void fetchPolls(0, true)
+  }, [authLoading, fetchPolls])
 
   const handleLoadMore = () => {
     const nextPage = page + 1
@@ -65,9 +67,9 @@ export default function Home() {
     fetchPolls(nextPage, false)
   }
 
-  const onVote = (pollId, optionId) => handleVote({
+  const onVote = (pollId: string, optionId: string) => handleVote({
     user, pollId, optionId, requireLogin,
-    onSuccess: (updatedPoll) => setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
+    onSuccess: (updatedPoll: Poll) => setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
   })
 
   return (
@@ -105,7 +107,7 @@ export default function Home() {
                   poll={poll}
                   user={user}
                   onVote={onVote}
-                  onDelete={(deletedId) => setPolls(prev => prev.filter(p => p.id !== deletedId))}
+                  onDelete={(deletedId: string) => setPolls(prev => prev.filter(p => p.id !== deletedId))}
                 />
               ))
             ) : (
@@ -134,11 +136,19 @@ export default function Home() {
 
         {!hasMore && polls.length > 0 && (
           <div className="text-center py-10 font-bold text-xs opacity-30 uppercase tracking-widest">
-            You've reached the end
+            You&apos;ve reached the end
           </div>
         )}
 
       </div>
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   )
 }

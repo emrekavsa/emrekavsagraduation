@@ -1,17 +1,20 @@
 "use client"
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useApp } from '@/context/AppContext'
 import { banUserAction, resolveReportAction } from '@/lib/actions'
 import PollCard from '@/components/PollCard'
+import type { ReportRecord } from '@/types/domain'
+
+type AdminTab = 'polls' | 'comments'
 
 export default function AdminPage() {
   const { user, isDark } = useApp()
-  const [activeTab, setActiveTab] = useState('polls') 
-  const [reports, setReports] = useState([])
+  const [activeTab, setActiveTab] = useState<AdminTab>('polls') 
+  const [reports, setReports] = useState<ReportRecord[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
       .from('reports')
@@ -32,7 +35,7 @@ export default function AdminPage() {
     if (error) {
       console.error("Query Error:", error.message)
     } else {
-      const filtered = data.filter(item => {
+      const filtered = ((data || []) as unknown as ReportRecord[]).filter(item => {
         if (activeTab === 'polls') return item.poll_id !== null && item.polls !== null
         if (activeTab === 'comments') return item.comment_id !== null && item.comments !== null
         return true
@@ -40,13 +43,14 @@ export default function AdminPage() {
       setReports(filtered)
     }
     setLoading(false)
-  }
+  }, [activeTab])
 
   useEffect(() => {
-    if (user?.is_admin) fetchReports()
-  }, [user, activeTab])
+    if (user?.is_admin) void Promise.resolve().then(fetchReports)
+  }, [fetchReports, user?.is_admin])
 
-  const handleAction = async (reportId) => {
+  const handleAction = async (reportId: string) => {
+    if (!user) return
     const res = await resolveReportAction(user.id, reportId)
     if (res.success) fetchReports()
     else alert(res.error) 
@@ -136,7 +140,7 @@ export default function AdminPage() {
                 {activeTab === 'comments' && report.comments && (
                   <div className={`p-4 rounded-2xl ${isDark ? 'bg-zinc-800/40' : 'bg-gray-100'}`}>
                     <p className="font-bold text-xs mb-1 text-blue-500">@{report.comments.profiles?.username}</p>
-                    <p className="text-sm font-medium italic opacity-90">"{report.comments.content}"</p>
+                    <p className="text-sm font-medium italic opacity-90">&quot;{report.comments.content}&quot;</p>
                   </div>
                 )}
               </div>

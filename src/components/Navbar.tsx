@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { KeyboardEvent } from "react";
 import { supabase } from "@/lib/supabase";
 import { useApp } from "@/context/AppContext";
 
@@ -17,7 +18,7 @@ export default function Navbar() {
     router.push("/");
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchTerm.trim() !== "") {
       router.push(`/search?q=${searchTerm.trim()}`);
     }
@@ -44,6 +45,7 @@ export default function Navbar() {
       <div className="w-full max-w-md relative">
         <img
           src="/search.svg"
+          alt=""
           className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 pointer-events-none ${isDark ? "invert" : ""}`}
         />
         <input

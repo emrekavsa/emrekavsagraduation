@@ -1,6 +1,6 @@
-export function formatRelativeTime(dateString) {
+export function formatRelativeTime(dateString?: string | null) {
   if (!dateString) return ''
-  const diff = Math.floor((new Date() - new Date(dateString)) / 1000)
+  const diff = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000)
   
   if (diff < 60) return 'just now'
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`

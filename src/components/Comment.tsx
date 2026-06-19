@@ -3,6 +3,20 @@ import { useState } from "react";
 import { formatRelativeTime } from "@/lib/utils";
 import { useApp } from "@/context/AppContext";
 import { useRouter } from 'next/navigation'
+import type { Dispatch, SetStateAction } from "react";
+import type { AppUser, CommentRecord } from "@/types/domain";
+
+type CommentProps = {
+  comment: CommentRecord;
+  allComments: CommentRecord[];
+  depth?: number;
+  user: AppUser | null;
+  onDelete: (commentId: string) => void | Promise<void>;
+  onUpdate: (commentId: string, content: string) => void | Promise<void>;
+  onReply: (commentId: string, content: string | null, isReport?: boolean) => void | Promise<void>;
+  replyingTo: string | null;
+  setReplyingTo: Dispatch<SetStateAction<string | null>>;
+};
 
 export default function Comment({
   comment,
@@ -14,7 +28,7 @@ export default function Comment({
   onReply,
   replyingTo,
   setReplyingTo,
-}) {
+}: CommentProps) {
   const { isDark } = useApp();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -27,7 +41,7 @@ export default function Comment({
   const replies = allComments.filter((r) => r.parent_id === comment.id);
   const isEdited =
     comment.updated_at &&
-    new Date(comment.updated_at) - new Date(comment.created_at) > 1000;
+    new Date(comment.updated_at).getTime() - new Date(comment.created_at || "").getTime() > 1000;
   const isReplying = replyingTo === comment.id;
 
   const handleSave = () => {
@@ -66,7 +80,7 @@ export default function Comment({
           {comment.profiles?.avatar_url ? (
             <img
               src={comment.profiles.avatar_url}
-              alt={comment.profiles?.username}
+              alt={comment.profiles?.username ?? "User"}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -127,7 +141,7 @@ export default function Comment({
             <div className="mt-1 flex flex-col gap-2">
               <textarea
                 className={`w-full p-3 text-sm rounded-xl border outline-none resize-none ${isDark ? "bg-zinc-800 border-zinc-700 text-white" : "bg-white border-gray-100 text-black"}`}
-                rows="2"
+                rows={2}
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 autoFocus
@@ -164,7 +178,7 @@ export default function Comment({
             <div className="mt-3 flex gap-2 items-stretch">
               <textarea
                 className={`flex-1 p-3 text-sm rounded-xl border outline-none resize-none ${isDark ? "bg-zinc-800 border-zinc-700 text-white" : "bg-white border-gray-100 text-black"}`}
-                rows="2"
+                rows={2}
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 autoFocus

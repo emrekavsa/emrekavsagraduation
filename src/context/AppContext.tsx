@@ -1,16 +1,27 @@
 "use client";
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import type { AppUser } from "@/types/domain";
 
-const AppContext = createContext();
+type AppContextValue = {
+  user: AppUser | null;
+  isDark: boolean;
+  loading: boolean;
+  isLoginOpen: boolean;
+  setIsLoginOpen: (isOpen: boolean) => void;
+  requireLogin: () => void;
+};
 
-export function AppProvider({ children }) {
-  const [user, setUser] = useState(null);
+const AppContext = createContext<AppContextValue | undefined>(undefined);
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AppUser | null>(null);
   const [isDark, setIsDark] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
-  const fetchProfile = async (sessionUser) => {
+  const fetchProfile = async (sessionUser: User): Promise<AppUser | null> => {
     if (!sessionUser) return null;
 
     const { data } = await supabase
@@ -42,7 +53,7 @@ export function AppProvider({ children }) {
     const themeQuery = window.matchMedia("(prefers-color-scheme: dark)");
     setIsDark(themeQuery.matches);
 
-    const handleTheme = (e) => setIsDark(e.matches);
+    const handleTheme = (e: MediaQueryListEvent) => setIsDark(e.matches);
     themeQuery.addEventListener("change", handleTheme);
 
     const getInitialSession = async () => {
@@ -96,4 +107,8 @@ export function AppProvider({ children }) {
   );
 }
 
-export const useApp = () => useContext(AppContext);
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) throw new Error("useApp must be used within AppProvider");
+  return context;
+};

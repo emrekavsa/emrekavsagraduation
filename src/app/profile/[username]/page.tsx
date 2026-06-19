@@ -1,23 +1,26 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import type { ChangeEvent } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useApp } from "@/context/AppContext"
 import PollCard from "@/components/PollCard"
 import { handleVote } from "@/lib/vote"
+import type { Poll, Profile } from "@/types/domain"
 
 const POLL_SELECT = '*, profiles(username, id, avatar_url), poll_options(id, content, image_url, votes(user_id)), comments(id)'
 
 export default function ProfilePage() {
-  const { username } = useParams()
+  const params = useParams<{ username: string }>()
+  const username = params.username
   const { user: currentUser, isDark, requireLogin } = useApp()
-  const [profile, setProfile] = useState(null)
-  const [polls, setPolls] = useState([])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [polls, setPolls] = useState<Poll[]>([])
   const [uploading, setUploading] = useState(false)
 
   const isOwnProfile = currentUser?.username === username
 
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     const { data: profileData } = await supabase
       .from("profiles")
       .select("*")
@@ -26,7 +29,7 @@ export default function ProfilePage() {
 
     if (!profileData) return
 
-    setProfile(profileData)
+    setProfile(profileData as Profile)
 
     const { data: pollData } = await supabase
       .from("polls")
@@ -34,18 +37,18 @@ export default function ProfilePage() {
       .eq("user_id", profileData.id)
       .order("created_at", { ascending: false })
 
-    if (pollData) setPolls(pollData)
-  }
-
-  useEffect(() => {
-    fetchProfileData()
+    if (pollData) setPolls(pollData as Poll[])
   }, [username])
 
-  const uploadAvatar = async (event) => {
+  useEffect(() => {
+    void fetchProfileData()
+  }, [fetchProfileData])
+
+  const uploadAvatar = async (event: ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true)
-      const file = event.target.files[0]
-      if (!file) return
+      const file = event.target.files?.[0]
+      if (!file || !currentUser) return
 
       const filePath = `${currentUser.id}/avatar`
 
@@ -68,7 +71,7 @@ export default function ProfilePage() {
 
       if (updateError) throw updateError
 
-      setProfile({ ...profile, avatar_url: urlWithCacheBuster })
+      if (profile) setProfile({ ...profile, avatar_url: urlWithCacheBuster })
     } catch (error) {
       console.error(error)
       alert('Error uploading avatar!')
@@ -77,9 +80,9 @@ export default function ProfilePage() {
     }
   }
 
-  const onVote = (pollId, optionId) => handleVote({
+  const onVote = (pollId: string, optionId: string) => handleVote({
     user: currentUser, pollId, optionId, requireLogin,
-    onSuccess: (updatedPoll) => setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
+    onSuccess: (updatedPoll: Poll) => setPolls(prev => prev.map(p => p.id === pollId ? updatedPoll : p))
   })
 
   return (
@@ -116,7 +119,7 @@ export default function ProfilePage() {
             poll={poll}
             user={currentUser}
             onVote={onVote}
-            onDelete={(deletedId) => setPolls(prev => prev.filter(p => p.id !== deletedId))}
+            onDelete={(deletedId: string) => setPolls(prev => prev.filter(p => p.id !== deletedId))}
           />
         ))}
       </div>

@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useApp } from "@/context/AppContext";
@@ -12,26 +13,28 @@ import {
   updateCommentAction,
   voteAction,
 } from "@/lib/actions";
+import type { CommentRecord, Poll, ReportTargetType } from "@/types/domain";
 
 const POLL_SELECT =
   "*, profiles(username, id, avatar_url), poll_options(id, content, image_url, votes(user_id)), comments(id)";
 
 export default function PollDetailPage() {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params.id;
   const { user, isDark, requireLogin } = useApp();
 
-  const [poll, setPoll] = useState(null);
-  const [comments, setComments] = useState([]);
+  const [poll, setPoll] = useState<Poll | null>(null);
+  const [comments, setComments] = useState<CommentRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [reportTarget, setReportTarget] = useState({ id: null, type: null });
-  const [replyingTo, setReplyingTo] = useState(null);
+  const [reportTarget, setReportTarget] = useState<{ id: string | null; type: ReportTargetType | null }>({ id: null, type: null });
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
 
-  const commentInputRef = useRef(null);
+  const commentInputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const { data: p } = await supabase
         .from("polls")
@@ -44,16 +47,16 @@ export default function PollDetailPage() {
         .eq("poll_id", id)
         .order("created_at", { ascending: true });
 
-      if (p) setPoll(p);
-      setComments(c || []);
+      if (p) setPoll(p as Poll);
+      setComments((c || []) as CommentRecord[]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    if (id) fetchData();
-  }, [id]);
+    if (id) void fetchData();
+  }, [fetchData, id]);
 
   useEffect(() => {
     if (!id) return;
@@ -67,14 +70,18 @@ export default function PollDetailPage() {
           schema: "public",
           table: "votes",
         },
-        () => fetchData(),
+        () => {
+          void fetchData();
+        },
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
-  }, [id]);
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [fetchData, id]);
 
-  const onVote = async (pollId, optionId) => {
+  const onVote = async (pollId: string, optionId: string) => {
     if (!user) return requireLogin();
 
     const result = await voteAction({
@@ -97,7 +104,7 @@ export default function PollDetailPage() {
     }
   };
 
-  const handleCommentSubmit = async (e) => {
+  const handleCommentSubmit = async (e?: FormEvent<HTMLFormElement>) => {
     if (e) e.preventDefault();
     if (!user || !newComment.trim() || submitting) return;
 
@@ -117,7 +124,7 @@ export default function PollDetailPage() {
     setSubmitting(false);
   };
 
-  const handleReply = async (parentId, content, isReport = false) => {
+  const handleReply = async (parentId: string, content: string | null, isReport = false) => {
     if (isReport) {
       if (!user) return requireLogin();
       setReportTarget({ id: parentId, type: "Comment" });
@@ -138,7 +145,8 @@ export default function PollDetailPage() {
     } else alert(result.error);
   };
 
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = async (commentId: string) => {
+    if (!user) return requireLogin();
     if (!confirm("Delete this comment?")) return;
     const result = await deleteCommentAction({
       comment_id: commentId,
@@ -148,7 +156,8 @@ export default function PollDetailPage() {
     else alert(result.error);
   };
 
-  const handleUpdateComment = async (commentId, content) => {
+  const handleUpdateComment = async (commentId: string, content: string) => {
+    if (!user) return requireLogin();
     const result = await updateCommentAction({
       comment_id: commentId,
       user_id: user.id,
@@ -192,7 +201,7 @@ export default function PollDetailPage() {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               className={`flex-1 p-4 rounded-2xl border outline-none resize-none ${isDark ? "bg-zinc-800 border-zinc-700 text-white" : "bg-white border-gray-200 text-black"}`}
-              rows="2"
+              rows={2}
             />
             <button
               disabled={submitting}

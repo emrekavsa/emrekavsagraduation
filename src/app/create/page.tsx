@@ -1,11 +1,18 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
+import type { ChangeEvent, FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useApp } from "@/context/AppContext"
 import { createPollAction } from "@/lib/actions"
 
 const CATEGORIES = ["General", "Tech", "Sports", "Gaming", "Movies & TV Shows"]
+
+type PollOptionDraft = {
+  content: string
+  image: File | null
+  preview: string | null
+}
 
 export default function CreatePoll() {
   const { user, isDark, loading: authLoading, requireLogin } = useApp()
@@ -15,17 +22,21 @@ export default function CreatePoll() {
   const [category, setCategory] = useState("General")
   const [loading, setLoading] = useState(false)
 
-  const [options, setOptions] = useState([
+  const [options, setOptions] = useState<PollOptionDraft[]>([
     { content: "", image: null, preview: null },
     { content: "", image: null, preview: null },
   ])
 
-  useEffect(() => {
+  const requireAuthenticatedUser = useCallback(() => {
     if (!authLoading && !user) requireLogin()
-  }, [user, authLoading])
+  }, [authLoading, requireLogin, user])
 
-  const handleFileChange = (index, e) => {
-    const file = e.target.files[0]
+  useEffect(() => {
+    requireAuthenticatedUser()
+  }, [requireAuthenticatedUser])
+
+  const handleFileChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
     if (file) {
       const newOptions = [...options]
       newOptions[index].image = file
@@ -38,13 +49,13 @@ export default function CreatePoll() {
     options.length < 4 &&
     setOptions([...options, { content: "", image: null, preview: null }])
 
-  const removeOption = (index) => {
+  const removeOption = (index: number) => {
     if (options.length > 2) {
       setOptions(options.filter((_, i) => i !== index))
     }
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!user) return requireLogin()
 
@@ -85,7 +96,7 @@ export default function CreatePoll() {
 
       router.push("/")
     } catch (err) {
-      alert(err.message)
+      alert(err instanceof Error ? err.message : "Something went wrong")
       setLoading(false)
     }
   }

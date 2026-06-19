@@ -8,7 +8,7 @@ export default function Sidebar() {
   const activeCat = searchParams.get('c')
   const { isDark } = useApp()
 
-  const getLinkClass = (catName) => {
+  const getLinkClass = (catName: string) => {
     const isActive = activeCat === catName
     return `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm ${
       isActive

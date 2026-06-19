@@ -5,8 +5,17 @@ import { formatRelativeTime } from "@/lib/utils";
 import { useApp } from "@/context/AppContext";
 import ReportModal from "@/components/ReportModal";
 import { deletePollAction } from "@/lib/actions";
+import type { AppUser, Poll, PollOption, Vote } from "@/types/domain";
 
-export default function PollCard({ poll, user, onVote, onDelete }) {
+type PollCardProps = {
+  poll: Poll | null;
+  user: AppUser | null;
+  onVote: (pollId: string, optionId: string) => void | Promise<void>;
+  onDelete?: (pollId: string) => void;
+  onCommentClick?: () => void;
+};
+
+export default function PollCard({ poll, user, onVote, onDelete }: PollCardProps) {
   const router = useRouter();
   const { isDark } = useApp();
   const [copied, setCopied] = useState(false);
@@ -14,18 +23,19 @@ export default function PollCard({ poll, user, onVote, onDelete }) {
 
   if (!poll || !poll.poll_options) return null;
 
+  const pollOptions = poll.poll_options;
   const authorName = poll.profiles?.username || "Anonymous";
-  const hasImages = poll.poll_options.some((opt) => opt.image_url);
+  const hasImages = pollOptions.some((opt: PollOption) => opt.image_url);
   const commentCount = poll.comments?.length || 0;
   const category = poll.category || "General";
   const totalVotes = poll.poll_options.reduce(
-    (sum, opt) => sum + (opt.votes?.length || 0),
+    (sum: number, opt: PollOption) => sum + (opt.votes?.length || 0),
     0,
   );
 
   const userVote = user
-    ? poll.poll_options.find((opt) =>
-        opt.votes?.some((v) => v.user_id === user.id),
+    ? pollOptions.find((opt: PollOption) =>
+        opt.votes?.some((v: Vote) => v.user_id === user.id),
       )
     : null;
 
@@ -33,6 +43,7 @@ export default function PollCard({ poll, user, onVote, onDelete }) {
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this poll?")) return;
+    if (!user) return;
     const res = await deletePollAction(user.id, poll.id);
     if (res.success) {
       onDelete ? onDelete(poll.id) : router.refresh();
@@ -49,7 +60,7 @@ export default function PollCard({ poll, user, onVote, onDelete }) {
 
   const getContainerClass = () => {
     if (!hasImages) return "flex flex-col gap-2";
-    if (poll.poll_options.length === 3) return "grid grid-cols-3 gap-4";
+    if (pollOptions.length === 3) return "grid grid-cols-3 gap-4";
     return "grid grid-cols-2 gap-4";
   };
   const containerClass = getContainerClass();
@@ -125,7 +136,7 @@ export default function PollCard({ poll, user, onVote, onDelete }) {
       <h3 className="text-xl font-bold mb-5 leading-tight">{poll.title}</h3>
 
       <div className={containerClass}>
-        {poll.poll_options.map((opt) => {
+        {pollOptions.map((opt: PollOption) => {
           const voteCount = opt.votes?.length || 0;
           const percent =
             totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
