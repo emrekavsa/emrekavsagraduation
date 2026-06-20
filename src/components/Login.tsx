@@ -2,6 +2,7 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useApp } from '@/context/AppContext'
+import { isValidUsername, normalizeUsername, USERNAME_REQUIREMENTS } from '@/lib/username'
 
 type LoginProps = {
   isOpen: boolean
@@ -24,7 +25,11 @@ export default function Login({ isOpen, onClose }: LoginProps) {
   if (!isOpen) return null
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const value = e.target.name === 'username'
+      ? e.target.value.toLowerCase()
+      : e.target.value
+
+    setForm({ ...form, [e.target.name]: value })
   }
 
   const handleAuth = async (e: FormEvent<HTMLFormElement>) => {
@@ -42,11 +47,16 @@ export default function Login({ isOpen, onClose }: LoginProps) {
         if (error) throw error
         onClose()
       } else {
+        const username = normalizeUsername(form.username)
+        if (!isValidUsername(username)) {
+          throw new Error(USERNAME_REQUIREMENTS)
+        }
+
         const { error } = await supabase.auth.signUp({
           email: form.email,
           password: form.password,
           options: {
-            data: { username: form.username },
+            data: { username },
             emailRedirectTo: window.location.origin,
           }
         })
@@ -98,6 +108,12 @@ export default function Login({ isOpen, onClose }: LoginProps) {
               name="username"
               placeholder="Username"
               required
+              minLength={3}
+              maxLength={20}
+              pattern="[a-z0-9_]{3,20}"
+              title={USERNAME_REQUIREMENTS}
+              autoCapitalize="none"
+              autoCorrect="off"
               value={form.username}
               onChange={handleChange}
               className={inputClass}

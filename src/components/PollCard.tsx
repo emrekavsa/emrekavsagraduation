@@ -76,7 +76,7 @@ export default function PollCard({ poll, user, onVote, onDelete }: PollCardProps
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-sm">
           <div
-            onClick={() => router.push(`/profile/${authorName}`)}
+            onClick={() => router.push(`/profile/${encodeURIComponent(authorName)}`)}
             className="flex items-center gap-2 cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden">

@@ -93,9 +93,10 @@ export default function Comment({
             <div className="text-xs space-x-1">
               <span
                 className="font-bold cursor-pointer"
-                onClick={() =>
-                  router.push(`/profile/${comment.profiles?.username}`)
-                }
+                  onClick={() =>
+                    comment.profiles?.username &&
+                    router.push(`/profile/${encodeURIComponent(comment.profiles.username)}`)
+                  }
               >
                 @{comment.profiles?.username}
               </span>

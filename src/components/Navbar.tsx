@@ -114,7 +114,7 @@ export default function Navbar() {
                   }`}
                 >
                   <Link
-                    href={`/profile/${username}`}
+                    href={`/profile/${encodeURIComponent(username)}`}
                     onClick={() => setIsOpen(false)}
                     className="block w-full text-left px-3 py-2 hover:bg-gray-500/10 rounded-lg text-sm font-bold"
                   >

@@ -106,7 +106,7 @@ function SearchContent() {
                 people.map(profile => (
                   <Link
                     key={profile.id}
-                    href={`/profile/${profile.username}`}
+                    href={`/profile/${encodeURIComponent(profile.username ?? "")}`}
                     className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
                       isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'
                     }`}
