@@ -1,8 +1,9 @@
 "use client"
-import { Suspense, useCallback, useEffect, useState } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useApp } from "@/context/AppContext"
 import PollCard from "@/components/PollCard"
+import PollCardSkeleton from "@/components/PollCardSkeleton"
 import { handleVote } from "@/lib/vote"
 import { fetchPollCards } from "@/lib/polls"
 import type { Poll } from "@/types/domain"
@@ -21,7 +22,13 @@ function HomeContent() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
 
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const isFetchingRef = useRef(false)
+  const pageRef = useRef(0)
+
   const fetchPolls = useCallback(async (pageIndex: number, isNewFilter: boolean) => {
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
     isNewFilter ? setDataLoading(true) : setLoadingMore(true)
 
     try {
@@ -47,20 +54,39 @@ nextPolls.sort((a, b) => Number(b.comment_count ?? b.comments?.length ?? 0) - Nu
     } finally {
       setDataLoading(false)
       setLoadingMore(false)
+      isFetchingRef.current = false
     }
   }, [category, sortBy])
 
+  // Initial fetch & reset on filter/sort change
   useEffect(() => {
     if (authLoading) return
     setPage(0)
+    pageRef.current = 0
+    isFetchingRef.current = false
     void fetchPolls(0, true)
   }, [authLoading, fetchPolls])
 
-  const handleLoadMore = () => {
-    const nextPage = page + 1
-    setPage(nextPage)
-    fetchPolls(nextPage, false)
-  }
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetchingRef.current) {
+          const nextPage = pageRef.current + 1
+          pageRef.current = nextPage
+          setPage(nextPage)
+          fetchPolls(nextPage, false)
+        }
+      },
+      { rootMargin: "200px" }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [fetchPolls, hasMore, polls.length])
 
   const onVote = (pollId: string, optionId: string) => handleVote({
     user, pollId, optionId, requireLogin,
@@ -88,8 +114,10 @@ nextPolls.sort((a, b) => Number(b.comment_count ?? b.comments?.length ?? 0) - Nu
         </div>
 
         {dataLoading && (
-          <div className={`text-center py-20 font-bold animate-pulse ${isDark ? 'text-white' : 'text-blue-500'}`}>
-            Loading...
+          <div className="flex flex-col gap-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <PollCardSkeleton key={i} />
+            ))}
           </div>
         )}
 
@@ -113,19 +141,16 @@ nextPolls.sort((a, b) => Number(b.comment_count ?? b.comments?.length ?? 0) - Nu
           </div>
         )}
 
-        {!dataLoading && hasMore && polls.length > 0 && (
-          <div className="flex justify-center mt-8">
-            <button
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-              className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
-                loadingMore
-                  ? 'opacity-50 cursor-not-allowed'
-                  : isDark ? 'bg-zinc-800 text-white hover:bg-zinc-700' : 'bg-gray-100 text-black hover:bg-gray-200'
-              }`}
-            >
-              {loadingMore ? 'Loading...' : 'Load More'}
-            </button>
+        {/* Infinite scroll sentinel + loading indicator */}
+        {hasMore && polls.length > 0 && (
+          <div ref={sentinelRef} className="flex justify-center py-8">
+            {loadingMore && (
+              <div className="flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full animate-bounce ${isDark ? 'bg-zinc-500' : 'bg-gray-400'}`} style={{ animationDelay: '0ms' }} />
+                <span className={`w-2 h-2 rounded-full animate-bounce ${isDark ? 'bg-zinc-500' : 'bg-gray-400'}`} style={{ animationDelay: '150ms' }} />
+                <span className={`w-2 h-2 rounded-full animate-bounce ${isDark ? 'bg-zinc-500' : 'bg-gray-400'}`} style={{ animationDelay: '300ms' }} />
+              </div>
+            )}
           </div>
         )}
 
