@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useApp } from "@/context/AppContext"
 import { isValidUsername, normalizeUsername, USERNAME_REQUIREMENTS } from "@/lib/username"
@@ -13,11 +14,11 @@ type LoginProps = {
 }
 
 export default function Login({ isOpen, onClose }: LoginProps) {
+  const router = useRouter()
   const { isDark } = useApp()
   const [mode, setMode] = useState<LoginMode>("login")
   const [form, setForm] = useState({ email: "", password: "", username: "" })
   const [loading, setLoading] = useState(false)
-  const [resetLoading, setResetLoading] = useState(false)
 
   useEffect(() => {
     if (!isOpen) {
@@ -36,26 +37,9 @@ export default function Login({ isOpen, onClose }: LoginProps) {
     setForm({ ...form, [e.target.name]: value })
   }
 
-  const handlePasswordReset = async () => {
-    if (resetLoading) return
-    if (!form.email.trim()) {
-      alert("Enter your email first.")
-      return
-    }
-
-    setResetLoading(true)
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(form.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
-
-      if (error) throw error
-      alert("Check your email for the password reset link.")
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Could not send reset email.")
-    } finally {
-      setResetLoading(false)
-    }
+  const openRecovery = () => {
+    onClose()
+    router.push("/recovery")
   }
 
   const handleAuth = async (e: FormEvent<HTMLFormElement>) => {
@@ -168,11 +152,10 @@ export default function Login({ isOpen, onClose }: LoginProps) {
           {mode === "login" && (
             <button
               type="button"
-              onClick={handlePasswordReset}
-              disabled={resetLoading}
-              className="self-start -mt-1 text-xs font-bold text-blue-500 hover:text-blue-400 disabled:opacity-50 transition-colors"
+              onClick={openRecovery}
+              className="self-start -mt-1 text-xs font-bold text-blue-500 hover:text-blue-400 transition-colors"
             >
-              {resetLoading ? "Sending reset link..." : "Forgot your password?"}
+              Forgot your password?
             </button>
           )}
           <button
