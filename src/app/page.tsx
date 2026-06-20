@@ -30,13 +30,7 @@ function HomeContent() {
 
       if (category) query = query.eq('category', category)
 
-      if (sortBy === 'popular') {
-        query = query.order('vote_count', { ascending: false })
-      } else if (sortBy === 'interacted') {
-        query = query.order('comment_count', { ascending: false })
-      } else {
-        query = query.order('created_at', { ascending: false })
-      }
+      query = query.order('created_at', { ascending: false })
 
       const from = pageIndex * ITEMS_PER_PAGE
       const to = from + ITEMS_PER_PAGE - 1
@@ -44,7 +38,16 @@ function HomeContent() {
 
       if (error) throw error
 
-      const nextPolls = (data || []) as Poll[]
+      const nextPolls = [...((data || []) as Poll[])]
+      if (sortBy === 'popular') {
+        nextPolls.sort((a, b) => {
+          const aVotes = a.poll_options?.reduce((sum, option) => sum + (option.votes?.length || 0), 0) || 0
+          const bVotes = b.poll_options?.reduce((sum, option) => sum + (option.votes?.length || 0), 0) || 0
+          return bVotes - aVotes
+        })
+      } else if (sortBy === 'interacted') {
+        nextPolls.sort((a, b) => (b.comments?.length || 0) - (a.comments?.length || 0))
+      }
       setHasMore(nextPolls.length === ITEMS_PER_PAGE)
       setPolls(prev => isNewFilter ? nextPolls : [...prev, ...nextPolls])
     } catch (error) {
