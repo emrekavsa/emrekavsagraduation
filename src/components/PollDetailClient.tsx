@@ -187,8 +187,8 @@ export default function PollDetailClient({
 
         <PollCard poll={poll} user={user} onVote={onVote} />
 
-        <div className="mt-8">
-          <h3 className="text-xl font-black mb-6">Comments</h3>
+        <div className={`mt-8 p-6 rounded-[32px] border shadow-xl ${isDark ? "bg-zinc-900 border-zinc-800 text-white" : "bg-white border-gray-100 text-black"}`}>
+          <h3 className="text-xl font-black mb-6">Discussion ({poll.comment_count || 0})</h3>
 
           <form onSubmit={handleComment} className="mb-8 flex gap-3">
             <input
@@ -212,13 +212,13 @@ export default function PollDetailClient({
           </form>
 
           <div className="space-y-4">
-            {comments.length > 0 ? (
-              comments.map((comment, index) => {
-                const isLast = index === comments.length - 1;
-                return (
-                  <div key={comment.id} ref={isLast ? lastCommentRef : null}>
+            {comments.filter((c) => !c.parent_id).length > 0 ? (
+              comments
+                .filter((c) => !c.parent_id)
+                .map((main) => (
+                  <div key={main.id}>
                     <Comment
-                      comment={comment}
+                      comment={main}
                       allComments={comments}
                       user={user}
                       onDelete={(deletedId) =>
@@ -232,13 +232,16 @@ export default function PollDetailClient({
                       setReplyingTo={setReplyingTo}
                     />
                   </div>
-                );
-              })
+                ))
             ) : (
               <p className="text-center py-10 opacity-40 italic font-bold">
                 No comments yet. Be the first!
               </p>
             )}
+            
+            {/* Infinite scroll sentinel */}
+            <div ref={lastCommentRef} className="h-4 w-full" />
+
             {loadingComments && (
               <p className="text-center py-4 opacity-50 text-sm font-bold animate-pulse">
                 Loading more...
