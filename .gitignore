@@ -46,3 +46,8 @@ next-env.d.ts
 # mercurial
 .hg/
 .hgignore
+
+
+AGENTS.md
+.agents/
+.codex/
